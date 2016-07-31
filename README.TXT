@@ -1,0 +1,9 @@
+-Notation
+  -Dictionary of the heights of notes
+  -sharps or flats logic
+  -beaming logic
+  -stems up or down, possibly contained in the beaming logic
+  -main file
+  -add stave/ linking staves together/ name stave/ add ledger lines and normal lines
+  -add note, sharps, flats
+  -display stuff, like the lines at the sides
