@@ -1,0 +1,15 @@
+.instrument-name-container {
+  display:inline-block;
+  vertical-align:top;
+}
+
+.instrument {
+  background-color: grey;
+  width: 100px;
+  vertical-align:top;
+}
+
+.bar-container {
+  display:inline-block;
+  vertical-align:top;
+}
