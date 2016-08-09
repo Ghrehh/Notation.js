@@ -14,7 +14,7 @@ var Bar = (function () {
     this.id = id;
 
     this.containerClassName = "bar-container";
-    this.className = "instrument";
+    this.className = "bar";
 
     this.barContainerHTML = '<div class="' + this.containerClassName + '" id="' + String(this.id) + '"></div>'; //container to be appended if it doesn't already exist
     this.barHTML = '<div class="' + this.className + '" id="' + String(this.instrument.id) + '">' + this.instrument.name + " - ID: " + String(this.id) + '</div>';
@@ -107,7 +107,7 @@ var Instrument = (function () {
     this.initialize();
   }
 
-  Instrument.prototype.createNewBar = function createNewBar() {
+  Instrument.prototype.newBar = function newBar() {
     var bar = new _bar2['default'](this, this.currentNumberOfBars());
     this.bars.push(bar);
     bar.initialize();
@@ -216,15 +216,32 @@ var Notation = (function () {
     //adds a bar to every current instrument
     for (var i = 0; i < this.instruments.length; i++) {
       var instrument = this.instruments[i];
-
-      instrument.createNewBar();
+      instrument.newBar();
     }
   };
 
+  //creates a new instrument and pushes it to the instruments array, name is optional.
+  //If it is not the first instrument to be added, this function will check to see the current number of bars and add those to the new instrument also.
+
   Notation.prototype.newInstrument = function newInstrument(name) {
-    var i = new _instrument2['default'](this, name); //create new instrument
-    this.instruments.push(i); //add it to the container
-    return i;
+
+    var instrument = new _instrument2['default'](this, name); //create new instrument
+
+    if (this.instruments.length != 0) {
+      //checks if another instrument exists
+
+      var numberOfBarsToAdd = this.instruments[0].bars.length; //can be any instrument as they'll all have the same length, so [0]
+
+      for (var i = 0; i < numberOfBarsToAdd; i++) {
+        //adds that number of bars, so if there are no bars yet it will do nothing
+        instrument.newBar();
+      }
+    } else {
+      instrument.newBar(); //each instrument should have at least one bar, for clefs, time sigs etc
+    }
+
+    this.instruments.push(instrument); //add it to the container
+    return instrument; //returns the object so it can be saved to a variable
   };
 
   //delete instrument by the name, the id or the object
@@ -265,6 +282,8 @@ var Notation = (function () {
       this.instruments.splice(instrumentToDeleteIndex, 1);
       instrumentToDelete.removeFromPage();
     }
+
+    this.removeEmptyBarContainers(); //runs the remove empty bar containers functions to REMOVE EMPTY BARS
   };
 
   //stuff that is run when the object is created
@@ -284,6 +303,20 @@ var Notation = (function () {
 
   Notation.prototype.addNamesContainer = function addNamesContainer() {
     $(this.container).append(this.instrumentNameContainerHTML);
+  };
+
+  //removes empty bar containers after deleting instruments or bars
+
+  Notation.prototype.removeEmptyBarContainers = function removeEmptyBarContainers() {
+    var barContainers = $(".bar-container");
+
+    for (var i = 0; i < barContainers.length; i++) {
+      var bar = barContainers.eq(i);
+
+      if (bar.children().length === 0) {
+        bar.remove();
+      }
+    }
   };
 
   return Notation;

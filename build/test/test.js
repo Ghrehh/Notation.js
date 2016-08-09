@@ -64,6 +64,8 @@ QUnit.test("Newly added instrument id should be one higher than the last, to avo
 
 });
 
+
+///DELETING INSTRUMENTS
 QUnit.test("Deleting instruments should work via name, id or object ", function( assert ) {
   var n = new Notation(".container");
   var one = n.newInstrument("Guitar 1");
@@ -94,6 +96,77 @@ QUnit.test("Deleting instruments should work via name, id or object ", function(
 });
 
 
+QUnit.test("Deleting instruments should remove all the bars", function( assert ) {
+  var n = new Notation(".container");
+  var one = n.newInstrument("Guitar 1");
+  var two = n.newInstrument("Guitar 2");
+  var three = n.newInstrument("Guitar 3");
   
+  assert.ok( $(".bar-container").children().length === 3, "Passed!" ); 
+  assert.ok( $(".instrument-name-container").children().length === 3, "Passed!" ); 
+  assert.ok( n.instruments.length === 3, "Passed!" );
+  
+  n.removeInstrument(three);
+
+  
+  assert.ok( $(".bar-container").children().length === 2, "Passed!" ); 
+  assert.ok( $(".instrument-name-container").children().length === 2, "Passed!" ); 
+  assert.ok( n.instruments.length === 2, "Passed!" );
+
+});
+
+
+//BARS
+
+QUnit.test("A Notation class with no instruments should have no bars", function( assert ) {
+  
+  var n = new Notation(".container");
+  assert.ok( $(".bar").length === 0, "Passed!" ); 
+
+});
+
+QUnit.test("A Notation class with no instruments because they were deleted should have no bars or bar containers", function( assert ) {
+  var n = new Notation(".container");
+  var one = n.newInstrument("Guitar 1");
+  var two = n.newInstrument("Guitar 2");
+  var three = n.newInstrument("Guitar 3");
+  
+  n.removeInstrument(one);
+  n.removeInstrument(two);
+  n.removeInstrument(three);
+  
+  assert.ok( $(".bar-container").length === 0, "Passed!" ); 
+  assert.ok( $(".bar").length === 0, "Passed!" ); 
+
+});
+
+QUnit.test("Instruments should be created with one bar", function( assert ) {
+  var n = new Notation(".container");
+  var one = n.newInstrument("Guitar 1");
+  
+  assert.ok( $(".bar-container").length === 1, "Passed!" ); 
+
+
+});
+
+QUnit.test("Newly added instruments should have the same number of bars as the rest of the instruments", function( assert ) {
+  var n = new Notation(".container");
+  var one = n.newInstrument("Guitar 1");
+  n.addBar();
+  n.addBar();
+  n.addBar();
+  
+  assert.ok( $(".bar").length === 4, "Passed!" ); //the initial one plus 3
+  
+  var two = n.newInstrument("Guitar 2");
+  
+  assert.ok( $(".bar").length === 8, "Passed!" ); 
+  
+  
+
+
+});
+
+
 
 

@@ -15,15 +15,31 @@ class Notation {
   addBar(){ //adds a bar to every current instrument
     for (let i = 0; i < this.instruments.length; i++){
       let instrument = this.instruments[i];
-      
-      instrument.createNewBar()
+      instrument.newBar()
     }
   }
   
+  //creates a new instrument and pushes it to the instruments array, name is optional. 
+  //If it is not the first instrument to be added, this function will check to see the current number of bars and add those to the new instrument also.
   newInstrument(name) {
-    let i = new Instrument(this, name); //create new instrument
-    this.instruments.push(i); //add it to the container 
-    return i;
+    
+    let instrument = new Instrument(this, name); //create new instrument
+
+    if(this.instruments.length != 0) { //checks if another instrument exists
+    
+      let numberOfBarsToAdd = this.instruments[0].bars.length; //can be any instrument as they'll all have the same length, so [0]
+      
+      for (let i = 0; i < numberOfBarsToAdd; i++){ //adds that number of bars, so if there are no bars yet it will do nothing
+        instrument.newBar();
+      }
+      
+    }
+    else {
+      instrument.newBar(); //each instrument should have at least one bar, for clefs, time sigs etc
+    }
+    
+    this.instruments.push(instrument); //add it to the container
+    return instrument; //returns the object so it can be saved to a variable
   }
   
   
@@ -71,6 +87,8 @@ class Notation {
       this.instruments.splice(instrumentToDeleteIndex, 1);
       instrumentToDelete.removeFromPage();
     }
+    
+    this.removeEmptyBarContainers(); //runs the remove empty bar containers functions to REMOVE EMPTY BARS
   }
   
   
@@ -91,6 +109,19 @@ class Notation {
   addNamesContainer() {
     $(this.container).append(this.instrumentNameContainerHTML);
   } 
+  
+  //removes empty bar containers after deleting instruments or bars
+  removeEmptyBarContainers() {
+    let barContainers = $(".bar-container");
+    
+    for (let i = 0; i < barContainers.length; i ++){
+      let bar = barContainers.eq(i);
+      
+      if (bar.children().length === 0) {
+        bar.remove();
+      }
+    }
+  }
   
 
 }

@@ -5,7 +5,7 @@ class Bar {
     this.id = id;
     
     this.containerClassName = "bar-container";
-    this.className = "instrument";
+    this.className = "bar";
     
     this.barContainerHTML = '<div class="' + this.containerClassName + '" id="' + String(this.id) + '"></div>'; //container to be appended if it doesn't already exist
     this.barHTML =  '<div class="' + this.className + '" id="' + String(this.instrument.id) + '">' + this.instrument.name + " - ID: " + String(this.id) + '</div>';

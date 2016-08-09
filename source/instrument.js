@@ -15,7 +15,7 @@ class Instrument {
     this.initialize();
   }
   
-  createNewBar(){
+  newBar(){
     var bar = new Bar(this, this.currentNumberOfBars());
     this.bars.push(bar);
     bar.initialize();
