@@ -3,7 +3,12 @@ import Instrument from './instrument';
 class Notation {
   constructor(container) {
     this.instrumentNameContainerHTML = '<div class="instrument-name-container"></div>';
-    this.barHeight = 35;
+    
+    
+    this.barHeight = 42; //height of bars and instrument name divs
+    this.marginUnderBar = 20;
+    this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)
+    
     
     if (container == undefined) { throw "You did not initiate Notation with a container" }
     this.container = container; //include the class or id of an element you wish to build the Notation in.
@@ -21,7 +26,7 @@ class Notation {
   
   //creates a new instrument and pushes it to the instruments array, name is optional. 
   //If it is not the first instrument to be added, this function will check to see the current number of bars and add those to the new instrument also.
-  newInstrument(name) {
+  addInstrument(name) {
     
     let instrument = new Instrument(this, name); //create new instrument
 
@@ -108,7 +113,16 @@ class Notation {
   //Adds the container that will contain the names of the instruments to the far left of the container, the number of instrument elements in this container is used to set the ids of instrument elements
   addNamesContainer() {
     $(this.container).append(this.instrumentNameContainerHTML);
-  } 
+    $(".instrument-name-container").css(this.getInstrumentNameContainerCSS());
+  }
+  
+  getInstrumentNameContainerCSS(){
+    return {"display": "inline-block",
+            "vertical-align": "top",
+            "margin-bottom": String(this.marginUnderBarContainer) + "px"
+      
+            }
+  }
   
   //removes empty bar containers after deleting instruments or bars
   removeEmptyBarContainers() {

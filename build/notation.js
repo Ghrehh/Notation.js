@@ -3,7 +3,13 @@
 
 exports.__esModule = true;
 
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _note = require("./note");
+
+var _note2 = _interopRequireDefault(_note);
 
 var Bar = (function () {
   function Bar(instrument, id) {
@@ -12,30 +18,56 @@ var Bar = (function () {
     this.instrument = instrument;
     this.notation = this.instrument.notation;
     this.id = id;
+    this.notes = [];
+    this.reference;
 
     this.containerClassName = "bar-container";
     this.className = "bar";
 
     this.barContainerHTML = '<div class="' + this.containerClassName + '" id="' + String(this.id) + '"></div>'; //container to be appended if it doesn't already exist
-    this.barHTML = '<div class="' + this.className + '" id="' + String(this.instrument.id) + '">' + this.instrument.name + " - ID: " + String(this.id) + '</div>';
+    this.barHTML = '<div class="' + this.className + '" id="' + String(this.instrument.id) + '">' + '</div>';
 
-    //this.initialize(); //need to make this a public method and run it from the instrument class creating it, pushBar is counting the number of bars in the bars array on the isntrument, so it need sto push before it starts
+    this.heightOfLines = 1;
+    this.widthOfBarLines = 1;
   }
+
+  //need to make this a public method and run it from the instrument class creating it, pushBar is counting the number of bars in the bars array on the isntrument, so it need sto push before it starts
 
   Bar.prototype.initialize = function initialize() {
     this.checkIfBarContainerExists(); //checks if the bar container exists, before adding the bar
-    this.pushBar();
+    this.printBar();
   };
 
-  Bar.prototype.redraw = function redraw() {};
+  Bar.prototype.addNote = function addNote() {
+    var note = new _note2["default"](this.reference);
+    note.pitch = "A";
+    note.octave = 3;
+    note.initialize();
 
-  Bar.prototype.pushBar = function pushBar() {
-    console.log("Pushing bar");
-    var currentBars = $(this.notation.container + " > ." + this.containerClassName);
-    var targetBar = currentBars.eq(this.id); //bar you will be appending to
-    targetBar.append(this.barHTML);
+    this.notes.push(note);
+  };
 
-    $(this.notation.container + " ." + this.className).css(this.getBarCSS());
+  Bar.prototype.printBar = function printBar() {
+    var currentBarContainers = $(this.notation.container + " > ." + this.containerClassName); //all bars
+    var targetBarContainer = currentBarContainers.eq(this.id); //bar you will be appending to
+
+    targetBarContainer.append(this.barHTML); //append the bar to the bar container
+
+    //now loop through the bar container to get your new bar you just added by the instrument id
+    var newBar = undefined; //where the bar will be stored
+
+    for (var i = 0; i < targetBarContainer.children().length; i++) {
+      var targetBar = targetBarContainer.children()[i];
+
+      if (targetBar.id == this.instrument.id) {
+        newBar = targetBar;
+      }
+    }
+
+    this.reference = newBar; //jquery object for the bar, pass it to a this variable so i can use it later in the note
+
+    $(newBar).css(this.getBarCSS()); //sets the bars css
+    this.createLines(newBar); //adds lines to it
   };
 
   //chcecks if a bar container already exists, so multiples do not get added
@@ -53,13 +85,13 @@ var Bar = (function () {
     //if the barcontainer cannot be found, add it to the DOM
     if (barFound === false) {
       this.addBarContainer();
-    } else {
-      console.warn("Bar container already exists");
     }
   };
 
   Bar.prototype.addBarContainer = function addBarContainer() {
+    //this uses the id of the current bar, so should append the bar container correctly
     $(this.notation.container).append(this.barContainerHTML);
+    $("." + this.containerClassName).css(this.getBarContainerCSS()); //probably quicker just to set all the bars css than to loop through them all and find the right one?
   };
 
   Bar.prototype.removeBarsFromContainer = function removeBarsFromContainer(target) {
@@ -67,10 +99,41 @@ var Bar = (function () {
   };
 
   Bar.prototype.getBarCSS = function getBarCSS() {
-    return { "height": String(this.notation.barHeight) + "px",
-      "margin": "4px",
-      "padding": "4px 8px"
+    return { "height": this.notation.barHeight + "px", //the "height" the stave lines will be
+      "margin": "0px -" + this.widthOfBarLines + "px " + this.notation.marginUnderBar + "px 0px", //notice the negative symbol, negative margin to overlap the end line and start line of two bars
+      "padding": "0px", //also on line above, marginUnderBar which is set in the notation class, sets the bottom margin of instrument name and bars
+      "border": "0px solid black",
+      "border-width": "0px " + this.widthOfBarLines + "px", //the "width the bar linse will be"
+      "vertical-align": "top"
     };
+  };
+
+  Bar.prototype.getBarContainerCSS = function getBarContainerCSS() {
+    return { "display": "inline-block",
+      "vertical-align": "top",
+      "margin-bottom": String(this.notation.marginUnderBarContainer) + "px" //padding under bar container and instrument name container
+
+    };
+  };
+
+  Bar.prototype.createLines = function createLines(bar) {
+    var height = parseInt($(bar).height() - this.heightOfLines); //for some reason this needs to be called with a $ selector, maybe cause it was passed from another function
+    //^ need to subtract the height of the line, otherwise bar height + line height puts the last line a line height out of the div
+    var subDivisions = 4; //number of times to divide by, number of spaces basically
+
+    for (var i = 0; i < subDivisions + 1; i++) {
+      //number of sub divisions plus 1, as the first line's top value gets multipled by 0 and doesn't do anything
+
+      var topOffset = height / subDivisions * i;
+
+      var lineStyle = "height: " + this.heightOfLines + "; background-color: black; position: relative;  top: " + topOffset + ";";
+      var lineHTML = '<div class="line" style="' + lineStyle + '"></div>';
+
+      var lineContainerStyle = "height: 0; padding: 0px; margin: 0px";
+      var lineContainerHTML = '<div class="line-container" style="' + lineContainerStyle + '">' + lineHTML + '</div';
+
+      $(bar).append(lineContainerHTML);
+    }
   };
 
   return Bar;
@@ -79,7 +142,7 @@ var Bar = (function () {
 exports["default"] = Bar;
 module.exports = exports["default"];
 
-},{}],2:[function(require,module,exports){
+},{"./note":4}],2:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -101,7 +164,7 @@ var Instrument = (function () {
     this.id = this.setId();
     this.bars = [];
 
-    this.className = "instrument"; //name has to be written without the period as when concaterated in a html class it won't work with it
+    this.className = "instrument-name"; //name has to be written without the period as when concaterated in a html class it won't work with it
     this.instrumentNameHTML = '<div class="' + this.className + '" id="' + String(this.id) + '">' + this.name + '</div>';
 
     this.initialize();
@@ -111,6 +174,21 @@ var Instrument = (function () {
     var bar = new _bar2['default'](this, this.currentNumberOfBars());
     this.bars.push(bar);
     bar.initialize();
+  };
+
+  Instrument.prototype.bar = function bar(barNumber) {
+    if (typeof barNumber === "number") {
+
+      if (barNumber < 1) {
+        //catch numbers lower than 1
+        throw "the parameter passed to instrument.bar() must be a number greater than 0 (index starts at 1)";
+      }
+
+      //minus one because its 0indexed, whereas I'm making a user enter in 1 for the first entry.
+      return this.bars[barNumber - 1]; //not sure if this method will cause problems
+    } else {
+        throw "the parameter passed to instrument.bar() must be a number";
+      }
   };
 
   //loops through each container, like name container and bar container, finds the instruments id and deletes all instances of it
@@ -172,8 +250,9 @@ var Instrument = (function () {
 
   Instrument.prototype.getInstrumentNameCSS = function getInstrumentNameCSS() {
     return { "height": String(this.notation.barHeight) + "px",
-      "margin": "4px",
-      "padding": "4px 8px"
+      "margin": "0px 20px " + this.notation.marginUnderBar + "px 0px",
+      "padding": "0"
+
     };
   };
 
@@ -201,7 +280,10 @@ var Notation = (function () {
     _classCallCheck(this, Notation);
 
     this.instrumentNameContainerHTML = '<div class="instrument-name-container"></div>';
-    this.barHeight = 35;
+
+    this.barHeight = 35; //height of bars and instrument name divs
+    this.marginUnderBar = 20;
+    this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)
 
     if (container == undefined) {
       throw "You did not initiate Notation with a container";
@@ -223,7 +305,7 @@ var Notation = (function () {
   //creates a new instrument and pushes it to the instruments array, name is optional.
   //If it is not the first instrument to be added, this function will check to see the current number of bars and add those to the new instrument also.
 
-  Notation.prototype.newInstrument = function newInstrument(name) {
+  Notation.prototype.addInstrument = function addInstrument(name) {
 
     var instrument = new _instrument2['default'](this, name); //create new instrument
 
@@ -303,6 +385,15 @@ var Notation = (function () {
 
   Notation.prototype.addNamesContainer = function addNamesContainer() {
     $(this.container).append(this.instrumentNameContainerHTML);
+    $(".instrument-name-container").css(this.getInstrumentNameContainerCSS());
+  };
+
+  Notation.prototype.getInstrumentNameContainerCSS = function getInstrumentNameContainerCSS() {
+    return { "display": "inline-block",
+      "vertical-align": "top",
+      "margin-bottom": String(this.marginUnderBarContainer) + "px"
+
+    };
   };
 
   //removes empty bar containers after deleting instruments or bars
@@ -326,4 +417,93 @@ window.Notation = Notation; //makes the module global
 exports['default'] = Notation;
 module.exports = exports['default'];
 
-},{"./instrument":2}]},{},[3]);
+},{"./instrument":2}],4:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var Note = (function () {
+  function Note(barReference) {
+    _classCallCheck(this, Note);
+
+    this.barReference = barReference;
+    this.reference;
+    this.className = "note";
+    this.id = this.getNoteID();
+
+    this.pitch;
+    this.octave;
+    this.duration;
+    this.tuplet;
+    this.rest;
+
+    this.wholeNoteDuration = 4.0;
+    this.halfNoteDuration = this.wholeNoteDuration / 2;
+    this.quarterNoteDuration = this.halfNoteDuration / 2;
+    this.eighthNoteDuration = this.quarterNoteDuration / 2;
+    this.sixteenthNoteDuration = this.eighthNoteDuration / 2;
+    this.thirtysecondNoteDuration = this.sixteenthNoteDuration / 2;
+  }
+
+  Note.prototype.initialize = function initialize() {
+    this.printNote();
+    this.setReference();
+    this.setCSS();
+  };
+
+  Note.prototype.printNote = function printNote() {
+    var noteHTML = '<div class="' + this.className + '" id="' + this.id + '"></div>';
+
+    var newNote = $(this.barReference).append(noteHTML);
+  };
+
+  Note.prototype.setReference = function setReference() {
+    var allNotes = $(this.barReference).children("." + this.className);
+    var targetNote = undefined;
+
+    for (var i = 0; i < allNotes.length; i++) {
+      var currentNote = allNotes.eq(i);
+
+      if (currentNote.attr("id") === String(this.id)) {
+        targetNote = currentNote;
+        break;
+      }
+    }
+
+    if (targetNote != undefined) {
+      this.reference = targetNote;
+    } else {
+      throw "unable to set reference for note";
+    }
+  };
+
+  Note.prototype.setCSS = function setCSS() {
+    $(this.reference).css(this.getNoteCSS());
+  };
+
+  Note.prototype.getNoteCSS = function getNoteCSS() {
+    return { "height": "100%",
+      "width": "30px",
+      "background-color": "#a4b4d6",
+      "display": "inline-block",
+      "border-right": "1px solid blue",
+      "box-sizing": "border-box"
+
+    };
+  };
+
+  //returns css attributes for note
+
+  Note.prototype.getNoteID = function getNoteID() {
+    return $(this.barReference).children("." + this.className).length;
+  };
+
+  return Note;
+})();
+
+exports['default'] = Note;
+module.exports = exports['default'];
+
+},{}]},{},[3]);

@@ -7,7 +7,7 @@ class Instrument {
     this.id = this.setId();
     this.bars = [];
     
-    this.className = "instrument" //name has to be written without the period as when concaterated in a html class it won't work with it
+    this.className = "instrument-name" //name has to be written without the period as when concaterated in a html class it won't work with it
     this.instrumentNameHTML = '<div class="' + this.className + '" id="' + String(this.id) + '">' +
                                   this.name +
                               '</div>';
@@ -19,6 +19,23 @@ class Instrument {
     var bar = new Bar(this, this.currentNumberOfBars());
     this.bars.push(bar);
     bar.initialize();
+  }
+  
+  bar(barNumber) {
+    if (typeof barNumber === "number") {
+    
+      if (barNumber < 1) { //catch numbers lower than 1
+        throw "the parameter passed to instrument.bar() must be a number greater than 0 (index starts at 1)"
+      }
+      
+      //minus one because its 0indexed, whereas I'm making a user enter in 1 for the first entry.
+      return this.bars[barNumber - 1]; //not sure if this method will cause problems
+      
+      
+    }
+    else {
+      throw "the parameter passed to instrument.bar() must be a number"
+    }
   }
   
   //loops through each container, like name container and bar container, finds the instruments id and deletes all instances of it
@@ -79,8 +96,9 @@ class Instrument {
   
   getInstrumentNameCSS() {
     return {"height": String(this.notation.barHeight) + "px",
-            "margin": "4px",
-            "padding": "4px 8px"
+            "margin": "0px 20px " + this.notation.marginUnderBar + "px 0px",
+            "padding": "0",
+            
           }
   }
   
