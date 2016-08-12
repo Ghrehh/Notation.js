@@ -26,13 +26,18 @@ class Bar {
     this.printBar();
   }
   
-  addNote() {
-    let note = new Note(this.reference);
+  addNote(n, addNoteToNote) {
+    //{ pitch = "A", accidental = "sharp/flat/natural", octave = 3, duration = 4 }
+    let note = new Note(this);
     note.pitch = "A";
     note.octave = 3;
     note.initialize();
     
-    this.notes.push(note);
+    this.notes.push([note]);
+    
+    let note2 = new Note(this, note);
+    note2.initialize();
+    
   }
   
   
@@ -98,7 +103,7 @@ class Bar {
   
   getBarCSS() {
     return {"height": this.notation.barHeight + "px", //the "height" the stave lines will be
-            "margin": "0px -" + this.widthOfBarLines  + "px " + this.notation.marginUnderBar + "px 0px", //notice the negative symbol, negative margin to overlap the end line and start line of two bars 
+            "margin": this.notation.marginAboveBar + "px -" + this.widthOfBarLines  + "px " + this.notation.marginUnderBar + "px 0px", //notice the negative symbol, negative margin to overlap the end line and start line of two bars 
             "padding": "0px",                                                                           //also on line above, marginUnderBar which is set in the notation class, sets the bottom margin of instrument name and bars
             "border": "0px solid black",
             "border-width": "0px " + this.widthOfBarLines  + "px", //the "width the bar linse will be"

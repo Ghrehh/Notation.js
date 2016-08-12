@@ -38,13 +38,17 @@ var Bar = (function () {
     this.printBar();
   };
 
-  Bar.prototype.addNote = function addNote() {
-    var note = new _note2["default"](this.reference);
+  Bar.prototype.addNote = function addNote(n, addNoteToNote) {
+    //{ pitch = "A", accidental = "sharp/flat/natural", octave = 3, duration = 4 }
+    var note = new _note2["default"](this);
     note.pitch = "A";
     note.octave = 3;
     note.initialize();
 
-    this.notes.push(note);
+    this.notes.push([note]);
+
+    var note2 = new _note2["default"](this, note);
+    note2.initialize();
   };
 
   Bar.prototype.printBar = function printBar() {
@@ -100,7 +104,7 @@ var Bar = (function () {
 
   Bar.prototype.getBarCSS = function getBarCSS() {
     return { "height": this.notation.barHeight + "px", //the "height" the stave lines will be
-      "margin": "0px -" + this.widthOfBarLines + "px " + this.notation.marginUnderBar + "px 0px", //notice the negative symbol, negative margin to overlap the end line and start line of two bars
+      "margin": this.notation.marginAboveBar + "px -" + this.widthOfBarLines + "px " + this.notation.marginUnderBar + "px 0px", //notice the negative symbol, negative margin to overlap the end line and start line of two bars
       "padding": "0px", //also on line above, marginUnderBar which is set in the notation class, sets the bottom margin of instrument name and bars
       "border": "0px solid black",
       "border-width": "0px " + this.widthOfBarLines + "px", //the "width the bar linse will be"
@@ -281,8 +285,9 @@ var Notation = (function () {
 
     this.instrumentNameContainerHTML = '<div class="instrument-name-container"></div>';
 
-    this.barHeight = 35; //height of bars and instrument name divs
-    this.marginUnderBar = 20;
+    this.barHeight = 42; //height of bars and instrument name divs
+    this.marginAboveBar = 50;
+    this.marginUnderBar = 60;
     this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)
 
     if (container == undefined) {
@@ -391,7 +396,8 @@ var Notation = (function () {
   Notation.prototype.getInstrumentNameContainerCSS = function getInstrumentNameContainerCSS() {
     return { "display": "inline-block",
       "vertical-align": "top",
-      "margin-bottom": String(this.marginUnderBarContainer) + "px"
+      "margin-top": this.marginAboveBar + "px",
+      "margin-bottom": this.marginUnderBarContainer + "px"
 
     };
   };
@@ -418,22 +424,29 @@ exports['default'] = Notation;
 module.exports = exports['default'];
 
 },{"./instrument":2}],4:[function(require,module,exports){
-'use strict';
+"use strict";
 
 exports.__esModule = true;
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Note = (function () {
-  function Note(barReference) {
+  function Note(bar, parentNote) {
     _classCallCheck(this, Note);
 
-    this.barReference = barReference;
-    this.reference;
+    this.bar = bar;
+    this.parentNote = parentNote;
+    this.barReference = this.bar.reference;
+    this.containerClassName = "note-container";
     this.className = "note";
-    this.id = this.getNoteID();
+    this.noteContainerID;
+    this.noteID;
+
+    this.noteContainerReference;
+    this.noteReference;
 
     this.pitch;
+    this.accidental;
     this.octave;
     this.duration;
     this.tuplet;
@@ -448,42 +461,95 @@ var Note = (function () {
   }
 
   Note.prototype.initialize = function initialize() {
+    //if a note is added not to be appended to another note, it will run these to set up the container the reference to it
+    if (this.parentNote === undefined) {
+      this.noteContainerID = this.getNoteContainerID();
+      this.printNoteContainer();
+      this.setNoteContainerReference();
+      this.setNoteContainerCSS();
+    } else {
+      this.noteContainerID = this.parentNote.noteContainerID;
+      this.noteContainerReference = this.parentNote.noteContainerReference;
+    }
+
+    this.noteID = this.getNoteID();
+    console.log(this.noteID);
     this.printNote();
-    this.setReference();
-    this.setCSS();
+    this.setNoteReference();
+    this.setNoteCSS();
+  };
+
+  Note.prototype.printNoteContainer = function printNoteContainer() {
+    var noteContainerHTML = '<div class="' + this.containerClassName + '" id="' + this.noteContainerID + '"></div>';
+
+    $(this.barReference).append(noteContainerHTML);
   };
 
   Note.prototype.printNote = function printNote() {
-    var noteHTML = '<div class="' + this.className + '" id="' + this.id + '"></div>';
+    var noteHTML = '<div class="' + this.className + '" id="' + this.noteID + '"></div>';
 
-    var newNote = $(this.barReference).append(noteHTML);
+    $(this.noteContainerReference).append(noteHTML);
   };
 
-  Note.prototype.setReference = function setReference() {
-    var allNotes = $(this.barReference).children("." + this.className);
+  Note.prototype.setNoteContainerReference = function setNoteContainerReference() {
+    var allNoteContainers = $(this.barReference).children("." + this.containerClassName);
     var targetNote = undefined;
 
-    for (var i = 0; i < allNotes.length; i++) {
-      var currentNote = allNotes.eq(i);
+    for (var i = 0; i < allNoteContainers.length; i++) {
+      var currentNote = allNoteContainers.eq(i);
 
-      if (currentNote.attr("id") === String(this.id)) {
+      if (currentNote.attr("id") === String(this.noteContainerID)) {
         targetNote = currentNote;
         break;
       }
     }
 
     if (targetNote != undefined) {
-      this.reference = targetNote;
+      this.noteContainerReference = targetNote;
     } else {
-      throw "unable to set reference for note";
+      throw "unable to set reference for note container";
     }
   };
 
-  Note.prototype.setCSS = function setCSS() {
-    $(this.reference).css(this.getNoteCSS());
+  Note.prototype.setNoteReference = function setNoteReference() {
+    var allNotes = $(this.noteContainerReference).children("." + this.className);
+    var targetNote = undefined;
+
+    for (var i = 0; i < allNotes.length; i++) {
+      var currentNote = allNotes.eq(i);
+
+      if (currentNote.attr("id") === String(this.noteID)) {
+        targetNote = currentNote;
+        break;
+      }
+    }
+
+    if (targetNote != undefined) {
+      this.noteReference = targetNote;
+    } else {
+      throw "unable to set reference for note container";
+    }
   };
 
-  Note.prototype.getNoteCSS = function getNoteCSS() {
+  Note.prototype.setNoteContainerCSS = function setNoteContainerCSS() {
+
+    if ($(this.noteContainerReference) === undefined) {
+      throw "noteContainerReference not found";
+    }
+
+    $(this.noteContainerReference).css(this.getNoteContainerCSS());
+  };
+
+  Note.prototype.setNoteCSS = function setNoteCSS() {
+
+    if ($(this.noteReference) === undefined) {
+      throw "noteContainerReference not found";
+    }
+
+    $(this.noteReference).css(this.getNoteCSS());
+  };
+
+  Note.prototype.getNoteContainerCSS = function getNoteContainerCSS() {
     return { "height": "100%",
       "width": "30px",
       "background-color": "#a4b4d6",
@@ -494,16 +560,33 @@ var Note = (function () {
     };
   };
 
+  //returns css attributes for note container
+
+  Note.prototype.getNoteCSS = function getNoteCSS() {
+    return { "height": "10px",
+      "width": "100%",
+      "background-color": "#e87676",
+      "display": "block",
+      "border-bottom": "1px solid red",
+      "box-sizing": "border-box"
+
+    };
+  };
+
   //returns css attributes for note
 
+  Note.prototype.getNoteContainerID = function getNoteContainerID() {
+    return $(this.barReference).children("." + this.containerClassName).length;
+  };
+
   Note.prototype.getNoteID = function getNoteID() {
-    return $(this.barReference).children("." + this.className).length;
+    return $(this.noteContainerReference).children().length;
   };
 
   return Note;
 })();
 
-exports['default'] = Note;
-module.exports = exports['default'];
+exports["default"] = Note;
+module.exports = exports["default"];
 
 },{}]},{},[3]);

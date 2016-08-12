@@ -6,7 +6,8 @@ class Notation {
     
     
     this.barHeight = 42; //height of bars and instrument name divs
-    this.marginUnderBar = 20;
+    this.marginAboveBar = 50;
+    this.marginUnderBar = 60;
     this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)
     
     
@@ -119,8 +120,9 @@ class Notation {
   getInstrumentNameContainerCSS(){
     return {"display": "inline-block",
             "vertical-align": "top",
-            "margin-bottom": String(this.marginUnderBarContainer) + "px"
-      
+            "margin-top": this.marginAboveBar + "px",
+            "margin-bottom": this.marginUnderBarContainer + "px",
+        
             }
   }
   
