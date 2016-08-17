@@ -41,14 +41,14 @@ var Bar = (function () {
   Bar.prototype.addNote = function addNote(n, addNoteToNote) {
     //{ pitch = "A", accidental = "sharp/flat/natural", octave = 3, duration = 4 }
     var note = new _note2["default"](this);
-    note.pitch = "A";
-    note.octave = 3;
+    note.pitch = n;
+    //note.octave = 3;
     note.initialize();
 
     this.notes.push([note]);
 
-    var note2 = new _note2["default"](this, note);
-    note2.initialize();
+    /*let note2 = new Note(this, note);
+    note2.initialize();*/
   };
 
   Bar.prototype.printBar = function printBar() {
@@ -71,7 +71,12 @@ var Bar = (function () {
     this.reference = newBar; //jquery object for the bar, pass it to a this variable so i can use it later in the note
 
     $(newBar).css(this.getBarCSS()); //sets the bars css
+
     this.createLines(newBar); //adds lines to it
+
+    if (this.id === 0) {
+      this.addClef(newBar);
+    }
   };
 
   //chcecks if a bar container already exists, so multiples do not get added
@@ -103,12 +108,15 @@ var Bar = (function () {
   };
 
   Bar.prototype.getBarCSS = function getBarCSS() {
+    var minWidth = this.notation.barHeight * 2;
+
     return { "height": this.notation.barHeight + "px", //the "height" the stave lines will be
       "margin": this.notation.marginAboveBar + "px -" + this.widthOfBarLines + "px " + this.notation.marginUnderBar + "px 0px", //notice the negative symbol, negative margin to overlap the end line and start line of two bars
       "padding": "0px", //also on line above, marginUnderBar which is set in the notation class, sets the bottom margin of instrument name and bars
       "border": "0px solid black",
       "border-width": "0px " + this.widthOfBarLines + "px", //the "width the bar linse will be"
-      "vertical-align": "top"
+      "vertical-align": "top",
+      "min-width": minWidth + "px"
     };
   };
 
@@ -140,6 +148,39 @@ var Bar = (function () {
     }
   };
 
+  Bar.prototype.addClef = function addClef(bar) {
+    var targetBar = $(bar);
+    var clefHTML = undefined;
+    var clefCSS = undefined;
+
+    if (this.instrument.clef === "bass") {
+      clefHTML = '<img src="' + this.notation.bassClefPath + '" class="clef">';
+
+      clefCSS = {
+        "height": "80%",
+        "display": "inline-block",
+        "padding": "2px 5px 2px 10px",
+        "box-sizing": "border-box",
+        "vertical-align": "top"
+      };
+    } else {
+      clefHTML = '<img src="' + this.notation.trebleClefPath + '" class="clef">';
+      var bottomOffset = $(this.reference).height() / 7;
+
+      clefCSS = {
+        "height": "150%",
+        "display": "inline-block",
+        "padding": "2px 5px 2px 10px",
+        "box-sizing": "border-box",
+        "bottom": bottomOffset,
+        "position": "relative"
+      };
+    }
+
+    targetBar.append(clefHTML);
+    targetBar.children(".clef").css(clefCSS);
+  };
+
   return Bar;
 })();
 
@@ -160,11 +201,12 @@ var _bar = require('./bar');
 var _bar2 = _interopRequireDefault(_bar);
 
 var Instrument = (function () {
-  function Instrument(notation, name) {
+  function Instrument(notation, name, clef) {
     _classCallCheck(this, Instrument);
 
     this.notation = notation;
     this.name = this.initName(name);
+    this.clef = clef;
     this.id = this.setId();
     this.bars = [];
 
@@ -285,7 +327,10 @@ var Notation = (function () {
 
     this.instrumentNameContainerHTML = '<div class="instrument-name-container"></div>';
 
-    this.barHeight = 42; //height of bars and instrument name divs
+    this.trebleClefPath = "./media/clef.png";
+    this.bassClefPath = "./media/bass.png";
+
+    this.barHeight = 45; //height of bars and instrument name divs
     this.marginAboveBar = 50;
     this.marginUnderBar = 60;
     this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)
@@ -310,9 +355,9 @@ var Notation = (function () {
   //creates a new instrument and pushes it to the instruments array, name is optional.
   //If it is not the first instrument to be added, this function will check to see the current number of bars and add those to the new instrument also.
 
-  Notation.prototype.addInstrument = function addInstrument(name) {
+  Notation.prototype.addInstrument = function addInstrument(name, clef) {
 
-    var instrument = new _instrument2['default'](this, name); //create new instrument
+    var instrument = new _instrument2['default'](this, name, clef); //create new instrument
 
     if (this.instruments.length != 0) {
       //checks if another instrument exists
@@ -442,8 +487,11 @@ var Note = (function () {
     this.noteContainerID;
     this.noteID;
 
-    this.noteContainerReference;
-    this.noteReference;
+    this.noteContainerReference; //holds note container jquery object
+    this.noteReference; //and the same for the note
+    this.noteHeadReference;
+    this.noteStemContainerReference;
+    this.noteStemReference;
 
     this.pitch;
     this.accidental;
@@ -462,6 +510,8 @@ var Note = (function () {
 
   Note.prototype.initialize = function initialize() {
     //if a note is added not to be appended to another note, it will run these to set up the container the reference to it
+
+    //Note-container, contains multiple or single notes and allocates the correct amount of space for them
     if (this.parentNote === undefined) {
       this.noteContainerID = this.getNoteContainerID();
       this.printNoteContainer();
@@ -472,11 +522,25 @@ var Note = (function () {
       this.noteContainerReference = this.parentNote.noteContainerReference;
     }
 
+    //the container for the note head, there may be many in each note-container
     this.noteID = this.getNoteID();
-    console.log(this.noteID);
     this.printNote();
     this.setNoteReference();
     this.setNoteCSS();
+
+    //note head gets top applied to it to move it to the correct place
+    this.printNoteHead();
+    this.setNoteHeadReference();
+    this.setNoteHeadCSS();
+
+    //note stem container, anything rotated in a nother roated element needs to have a 0 height 0 width container to stop strange things from happening when the height is adjusted
+    this.printNoteStemContainer();
+    this.setNoteStemContainerReference();
+    this.setNoteStemContainerCSS();
+
+    this.printNoteStem();
+    this.setNoteStemReference();
+    this.setNoteStemCSS();
   };
 
   Note.prototype.printNoteContainer = function printNoteContainer() {
@@ -489,6 +553,23 @@ var Note = (function () {
     var noteHTML = '<div class="' + this.className + '" id="' + this.noteID + '"></div>';
 
     $(this.noteContainerReference).append(noteHTML);
+  };
+
+  Note.prototype.printNoteHead = function printNoteHead() {
+    var noteHeadHTML = '<div class="note-head"></div>';
+
+    $(this.noteReference).append(noteHeadHTML);
+  };
+
+  Note.prototype.printNoteStemContainer = function printNoteStemContainer() {
+    var noteStemContainerHTML = '<div class="note-stem-container"></div>';
+    $(this.noteHeadReference).append(noteStemContainerHTML);
+  };
+
+  Note.prototype.printNoteStem = function printNoteStem() {
+    var noteStemHTML = '<div class="note-stem"></div>';
+
+    $(this.noteStemContainerReference).append(noteStemHTML);
   };
 
   Note.prototype.setNoteContainerReference = function setNoteContainerReference() {
@@ -531,6 +612,18 @@ var Note = (function () {
     }
   };
 
+  Note.prototype.setNoteHeadReference = function setNoteHeadReference() {
+    this.noteHeadReference = $(this.noteReference).children();
+  };
+
+  Note.prototype.setNoteStemContainerReference = function setNoteStemContainerReference() {
+    this.noteStemContainerReference = $(this.noteHeadReference).children();
+  };
+
+  Note.prototype.setNoteStemReference = function setNoteStemReference() {
+    this.noteStemReference = $(this.noteStemContainerReference).children();
+  };
+
   Note.prototype.setNoteContainerCSS = function setNoteContainerCSS() {
 
     if ($(this.noteContainerReference) === undefined) {
@@ -549,12 +642,26 @@ var Note = (function () {
     $(this.noteReference).css(this.getNoteCSS());
   };
 
+  Note.prototype.setNoteHeadCSS = function setNoteHeadCSS() {
+    $(this.noteHeadReference).css(this.getNoteHeadCSS());
+  };
+
+  Note.prototype.setNoteStemContainerCSS = function setNoteStemContainerCSS() {
+    $(this.noteStemContainerReference).css(this.getNoteStemContainerCSS());
+  };
+
+  Note.prototype.setNoteStemCSS = function setNoteStemCSS() {
+    $(this.noteStemReference).css(this.getNoteStemCSS());
+  };
+
   Note.prototype.getNoteContainerCSS = function getNoteContainerCSS() {
+    var width = $(this.barReference).height();
+
     return { "height": "100%",
-      "width": "30px",
-      "background-color": "#a4b4d6",
+      "width": width + "px",
+      //"background-color": "#a4b4d6",
       "display": "inline-block",
-      "border-right": "1px solid blue",
+      //"border-right": "1px solid blue",
       "box-sizing": "border-box"
 
     };
@@ -563,11 +670,11 @@ var Note = (function () {
   //returns css attributes for note container
 
   Note.prototype.getNoteCSS = function getNoteCSS() {
-    return { "height": "10px",
+    return { "height": "0px",
       "width": "100%",
       "background-color": "#e87676",
       "display": "block",
-      "border-bottom": "1px solid red",
+      "border-bottom": "0px solid red",
       "box-sizing": "border-box"
 
     };
@@ -575,12 +682,68 @@ var Note = (function () {
 
   //returns css attributes for note
 
+  Note.prototype.getNoteHeadCSS = function getNoteHeadCSS() {
+    var noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
+    var noteTopOffset = this.getNoteTopOffset(this.pitch);
+
+    return {
+      "height": noteHeadHeight + "px",
+      "width": noteHeadHeight * 1.25 + "px",
+      "box-sizing": "border-box",
+      "border": "2px solid black",
+      "border-width": "2px 1px",
+      "border-radius": "50px",
+      "transform": "rotate(-15deg)",
+      "margin": "auto",
+      "position": "relative",
+      "top": "" + noteHeadHeight * noteTopOffset + "px"
+
+    };
+  };
+
+  Note.prototype.getNoteStemContainerCSS = function getNoteStemContainerCSS() {
+    return {
+      "transform": "rotate(15deg)",
+      "height": "0px",
+      "width": "0px"
+    };
+  };
+
+  Note.prototype.getNoteStemCSS = function getNoteStemCSS() {
+    var noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
+    var stemWidth = 1;
+    var stemHeight = noteHeadHeight * 2.5;
+    var left = noteHeadHeight * 1.25 - stemWidth - 1; // the addiontal minus 1 just seems to do the trick
+
+    return {
+      "height": stemHeight,
+      "width": stemWidth,
+      "background-color": "black",
+      "position": "relative",
+      "left": left,
+      "bottom": stemHeight - noteHeadHeight / 2.60
+    };
+  };
+
   Note.prototype.getNoteContainerID = function getNoteContainerID() {
     return $(this.barReference).children("." + this.containerClassName).length;
   };
 
   Note.prototype.getNoteID = function getNoteID() {
     return $(this.noteContainerReference).children().length;
+  };
+
+  Note.prototype.getNoteTopOffset = function getNoteTopOffset(note) {
+    var noteDictionary = { "E": 0,
+      "D": 0.5,
+      "C": 1,
+      "B": 1.5,
+      "A": 2,
+      "G": 2.5,
+      "F": 3
+    };
+
+    return noteDictionary[note];
   };
 
   return Note;

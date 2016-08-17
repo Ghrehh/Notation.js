@@ -4,8 +4,10 @@ class Notation {
   constructor(container) {
     this.instrumentNameContainerHTML = '<div class="instrument-name-container"></div>';
     
+    this.trebleClefPath = "./media/clef.png";
+    this.bassClefPath = "./media/bass.png";
     
-    this.barHeight = 42; //height of bars and instrument name divs
+    this.barHeight = 45; //height of bars and instrument name divs
     this.marginAboveBar = 50;
     this.marginUnderBar = 60;
     this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)
@@ -27,9 +29,9 @@ class Notation {
   
   //creates a new instrument and pushes it to the instruments array, name is optional. 
   //If it is not the first instrument to be added, this function will check to see the current number of bars and add those to the new instrument also.
-  addInstrument(name) {
+  addInstrument(name, clef) {
     
-    let instrument = new Instrument(this, name); //create new instrument
+    let instrument = new Instrument(this, name, clef); //create new instrument
 
     if(this.instruments.length != 0) { //checks if another instrument exists
     

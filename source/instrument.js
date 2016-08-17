@@ -1,9 +1,10 @@
 import Bar from './bar';
 
 class Instrument {
-  constructor(notation, name) {
+  constructor(notation, name, clef) {
     this.notation = notation;
     this.name = this.initName(name);
+    this.clef = clef;
     this.id = this.setId();
     this.bars = [];
     

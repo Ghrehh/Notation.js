@@ -8,7 +8,7 @@
 
 .bar {
   background-color: #dcdcdc;
-  min-width: 60px;
+  /*min-width: 40px;*/
   vertical-align:top;
 }
 
