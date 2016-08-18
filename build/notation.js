@@ -11,6 +11,10 @@ var _note = require("./note");
 
 var _note2 = _interopRequireDefault(_note);
 
+var _keySignature = require("./keySignature");
+
+var _keySignature2 = _interopRequireDefault(_keySignature);
+
 var Bar = (function () {
   function Bar(instrument, id) {
     _classCallCheck(this, Bar);
@@ -20,6 +24,8 @@ var Bar = (function () {
     this.id = id;
     this.notes = [];
     this.reference;
+
+    this.timeSignature;
 
     this.containerClassName = "bar-container";
     this.className = "bar";
@@ -76,6 +82,7 @@ var Bar = (function () {
 
     if (this.id === 0) {
       this.addClef(newBar);
+      this.addKeySignature(newBar);
     }
   };
 
@@ -181,13 +188,17 @@ var Bar = (function () {
     targetBar.children(".clef").css(clefCSS);
   };
 
+  Bar.prototype.addKeySignature = function addKeySignature() {
+    this.keySignature = new _keySignature2["default"](this);
+  };
+
   return Bar;
 })();
 
 exports["default"] = Bar;
 module.exports = exports["default"];
 
-},{"./note":4}],2:[function(require,module,exports){
+},{"./keySignature":3,"./note":5}],2:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -309,6 +320,147 @@ exports['default'] = Instrument;
 module.exports = exports['default'];
 
 },{"./bar":1}],3:[function(require,module,exports){
+"use strict";
+
+exports.__esModule = true;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var KeySignature = (function () {
+  function KeySignature(bar) {
+    _classCallCheck(this, KeySignature);
+
+    this.bar = bar;
+    this.instrument = this.bar.instrument;
+
+    this.numberOf = 7; //number of sharps or flats 0-7
+    this.typeOf = "sharps"; //sharps or flats
+
+    this.keySignatureContainerClassName = "key-signature-container";
+    this.keySignatureContainerReference;
+
+    this.keySignatureClassName = "key-signature";
+
+    this.sharpClassName = "sharp";
+
+    this.initialize();
+
+    //element heirarchy
+
+    //div key-signature-container (holds all the sharp/flats)
+    //div key-signature
+    //sharp(1-4) (lines)
+  }
+
+  KeySignature.prototype.initialize = function initialize() {
+    this.appendKeyContainer();
+    this.setKeyContainerReference();
+    this.setKeyContainerCSS();
+
+    for (var i = 0; i < this.numberOf; i++) {
+
+      this.appendKey();
+      this.keyCSS();
+
+      if (this.typeOf === "sharps") {
+        this.drawSharp();
+      } else if (this.typeOf === "flats") {} else {
+        throw "valid type of keysignature was not passed, the valid paramaters are either 'sharps' or 'flats'";
+      }
+    }
+  };
+
+  //containers the keysignature
+
+  KeySignature.prototype.appendKeyContainer = function appendKeyContainer() {
+    var keyContainerHTML = '<div class="' + this.keySignatureContainerClassName + '"></div>';
+    var targetBar = $(this.bar.reference);
+
+    targetBar.append(keyContainerHTML);
+  };
+
+  KeySignature.prototype.setKeyContainerReference = function setKeyContainerReference() {
+    var bar = $(this.bar.reference);
+    var target = bar.children("." + this.keySignatureContainerClassName);
+
+    this.keySignatureContainerReference = target;
+  };
+
+  KeySignature.prototype.setKeyContainerCSS = function setKeyContainerCSS() {
+
+    var style = { "display": "inline-block",
+      "height": "100%",
+      "vertical-align": "top"
+    };
+
+    $(this.keySignatureContainerReference).css(style);
+  };
+
+  KeySignature.prototype.appendKey = function appendKey() {
+    var keyHTML = '<div class"' + this.keySignatureClassName + '"></div>';
+    var container = $(this.keySignatureContainerReference);
+
+    container.append(keyHTML); //append new sharp
+  };
+
+  KeySignature.prototype.keyCSS = function keyCSS() {
+    var container = $(this.keySignatureContainerReference);
+    var newestElement = container.children().last(); //get the newly added element
+
+    var width = $(this.bar.reference).height() / 2.5;
+
+    var style = { "display": "inline-block",
+      //"background-color":"black",
+      "border": "1px solid black",
+      "vertical-align": "top",
+      "width": width + "px"
+
+    };
+
+    newestElement.css(style);
+  };
+
+  KeySignature.prototype.drawSharp = function drawSharp() {
+    var container = $(this.keySignatureContainerReference); //key sig container
+    var newestElement = container.children().last(); //latest instance of "key sig" which holds each sharp or flat
+
+    this.firstSharpLine(newestElement);
+    this.secondSharpLine(newestElement);
+    this.thirdSharpLine(newestElement);
+    this.fourthSharpLine(newestElement);
+  };
+
+  KeySignature.prototype.firstSharpLine = function firstSharpLine(keySignature) {
+    var kSig = $(keySignature);
+
+    var lineHTML = '<div class="line line1"></div>';
+  };
+
+  KeySignature.prototype.secondSharpLine = function secondSharpLine(keySignature) {
+    var kSig = $(keySignature);
+
+    var lineHTML = '<div class="line line2"></div>';
+  };
+
+  KeySignature.prototype.thirdSharpLine = function thirdSharpLine(keySignature) {
+    var kSig = $(keySignature);
+
+    var lineHTML = '<div class="line line3"></div>';
+  };
+
+  KeySignature.prototype.fourthSharpLine = function fourthSharpLine(keySignature) {
+    var kSig = $(keySignature);
+
+    var lineHTML = '<div class="line line4"></div>';
+  };
+
+  return KeySignature;
+})();
+
+exports["default"] = KeySignature;
+module.exports = exports["default"];
+
+},{}],4:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -329,6 +481,8 @@ var Notation = (function () {
 
     this.trebleClefPath = "./media/clef.png";
     this.bassClefPath = "./media/bass.png";
+
+    this.keySignature = "C";
 
     this.barHeight = 45; //height of bars and instrument name divs
     this.marginAboveBar = 50;
@@ -468,7 +622,7 @@ window.Notation = Notation; //makes the module global
 exports['default'] = Notation;
 module.exports = exports['default'];
 
-},{"./instrument":2}],4:[function(require,module,exports){
+},{"./instrument":2}],5:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -752,4 +906,4 @@ var Note = (function () {
 exports["default"] = Note;
 module.exports = exports["default"];
 
-},{}]},{},[3]);
+},{}]},{},[4]);

@@ -7,6 +7,8 @@ class Notation {
     this.trebleClefPath = "./media/clef.png";
     this.bassClefPath = "./media/bass.png";
     
+    this.keySignature = "C";
+    
     this.barHeight = 45; //height of bars and instrument name divs
     this.marginAboveBar = 50;
     this.marginUnderBar = 60;

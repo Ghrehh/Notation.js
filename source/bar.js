@@ -1,4 +1,5 @@
 import Note from "./note";
+import KeySignature from "./keySignature";
 
 class Bar {
   constructor(instrument, id){
@@ -7,6 +8,8 @@ class Bar {
     this.id = id;
     this.notes = [];
     this.reference;
+    
+    this.timeSignature;
     
     this.containerClassName = "bar-container";
     this.className = "bar";
@@ -66,6 +69,7 @@ class Bar {
     
     if (this.id === 0) {
       this.addClef(newBar);
+      this.addKeySignature(newBar);
     }
 
   }
@@ -186,6 +190,10 @@ class Bar {
     
   }
   
+  
+  addKeySignature() {
+    this.keySignature = new KeySignature(this);
+  }
   
 }
 export default Bar;

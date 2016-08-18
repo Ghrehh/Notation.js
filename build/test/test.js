@@ -200,6 +200,16 @@ QUnit.test("instrument.bar(barNumber) should return the right bar", function( as
 
 });
 
+QUnit.test("The first bar should contain a clef", function( assert ) {
+
+  
+  
+  
+
+
+});
+
+
 
 
 
