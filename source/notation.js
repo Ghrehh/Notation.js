@@ -9,7 +9,7 @@ class Notation {
     
     this.keySignature = "C";
     
-    this.barHeight = 45; //height of bars and instrument name divs
+    this.barHeight = 35; //height of bars and instrument name divs
     this.marginAboveBar = 50;
     this.marginUnderBar = 60;
     this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)

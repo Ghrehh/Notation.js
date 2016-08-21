@@ -15,6 +15,8 @@ $(document).ready(function(){
   i.bar(1).addNote("G");
   i.bar(1).addNote("C");
   i3.bar(3).addNote("F");
+  
+  i3.bar(3).addKeySignature("flats", 7);
 
   var n2 =  new Notation(".container2");
   

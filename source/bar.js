@@ -9,6 +9,7 @@ class Bar {
     this.notes = [];
     this.reference;
     
+    this.keySignature;
     this.timeSignature;
     
     this.containerClassName = "bar-container";
@@ -69,7 +70,7 @@ class Bar {
     
     if (this.id === 0) {
       this.addClef(newBar);
-      this.addKeySignature(newBar);
+      this.addKeySignature("sharps", 5);
     }
 
   }
@@ -136,7 +137,7 @@ class Bar {
       let topOffset = (height / subDivisions) * i;
 
       
-      let lineStyle = "height: " + this.heightOfLines + "; background-color: black; position: relative;  top: " + topOffset + ";"
+      let lineStyle = "height: " + this.heightOfLines + "; background-color: #636363; position: relative;  top: " + topOffset + ";"
       let lineHTML = '<div class="line" style="' + lineStyle + '"></div>'
       
       let lineContainerStyle = "height: 0; padding: 0px; margin: 0px"
@@ -165,6 +166,7 @@ class Bar {
         "padding": "2px 5px 2px 10px",
         "box-sizing": "border-box",
         "vertical-align":"top",
+        "position": "relative", //so it sits atop the lines
       } 
     }
     else {
@@ -191,8 +193,8 @@ class Bar {
   }
   
   
-  addKeySignature() {
-    this.keySignature = new KeySignature(this);
+  addKeySignature(typeOf, numberOf) {
+    this.keySignature = new KeySignature(this, typeOf, numberOf);
   }
   
 }

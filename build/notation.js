@@ -25,6 +25,7 @@ var Bar = (function () {
     this.notes = [];
     this.reference;
 
+    this.keySignature;
     this.timeSignature;
 
     this.containerClassName = "bar-container";
@@ -82,7 +83,7 @@ var Bar = (function () {
 
     if (this.id === 0) {
       this.addClef(newBar);
-      this.addKeySignature(newBar);
+      this.addKeySignature("sharps", 5);
     }
   };
 
@@ -145,7 +146,7 @@ var Bar = (function () {
 
       var topOffset = height / subDivisions * i;
 
-      var lineStyle = "height: " + this.heightOfLines + "; background-color: black; position: relative;  top: " + topOffset + ";";
+      var lineStyle = "height: " + this.heightOfLines + "; background-color: #636363; position: relative;  top: " + topOffset + ";";
       var lineHTML = '<div class="line" style="' + lineStyle + '"></div>';
 
       var lineContainerStyle = "height: 0; padding: 0px; margin: 0px";
@@ -168,28 +169,29 @@ var Bar = (function () {
         "display": "inline-block",
         "padding": "2px 5px 2px 10px",
         "box-sizing": "border-box",
-        "vertical-align": "top"
-      };
-    } else {
-      clefHTML = '<img src="' + this.notation.trebleClefPath + '" class="clef">';
-      var bottomOffset = $(this.reference).height() / 7;
+        "vertical-align": "top",
+        "position": "relative" };
+    } else //so it sits atop the lines
+      {
+        clefHTML = '<img src="' + this.notation.trebleClefPath + '" class="clef">';
+        var bottomOffset = $(this.reference).height() / 7;
 
-      clefCSS = {
-        "height": "150%",
-        "display": "inline-block",
-        "padding": "2px 5px 2px 10px",
-        "box-sizing": "border-box",
-        "bottom": bottomOffset,
-        "position": "relative"
-      };
-    }
+        clefCSS = {
+          "height": "150%",
+          "display": "inline-block",
+          "padding": "2px 5px 2px 10px",
+          "box-sizing": "border-box",
+          "bottom": bottomOffset,
+          "position": "relative"
+        };
+      }
 
     targetBar.append(clefHTML);
     targetBar.children(".clef").css(clefCSS);
   };
 
-  Bar.prototype.addKeySignature = function addKeySignature() {
-    this.keySignature = new _keySignature2["default"](this);
+  Bar.prototype.addKeySignature = function addKeySignature(typeOf, numberOf) {
+    this.keySignature = new _keySignature2["default"](this, typeOf, numberOf);
   };
 
   return Bar;
@@ -327,21 +329,22 @@ exports.__esModule = true;
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var KeySignature = (function () {
-  function KeySignature(bar) {
+  function KeySignature(bar, typeOf, numberOf) {
     _classCallCheck(this, KeySignature);
 
     this.bar = bar;
     this.instrument = this.bar.instrument;
 
-    this.numberOf = 7; //number of sharps or flats 0-7
-    this.typeOf = "sharps"; //sharps or flats
+    this.sharpHorizontalLineThickness = $(this.bar.reference).height() / 4 / 2.75;
+    this.sharpVerticalLineThickness = $(this.bar.reference).height() / 4 / 4.25;
+
+    this.numberOf = numberOf; //number of sharps or flats 0-7
+    this.typeOf = typeOf; //sharps or flats
 
     this.keySignatureContainerClassName = "key-signature-container";
     this.keySignatureContainerReference;
 
     this.keySignatureClassName = "key-signature";
-
-    this.sharpClassName = "sharp";
 
     this.initialize();
 
@@ -360,11 +363,13 @@ var KeySignature = (function () {
     for (var i = 0; i < this.numberOf; i++) {
 
       this.appendKey();
-      this.keyCSS();
+      this.keyCSS(i);
 
       if (this.typeOf === "sharps") {
         this.drawSharp();
-      } else if (this.typeOf === "flats") {} else {
+      } else if (this.typeOf === "flats") {
+        this.drawFlat();
+      } else {
         throw "valid type of keysignature was not passed, the valid paramaters are either 'sharps' or 'flats'";
       }
     }
@@ -376,7 +381,12 @@ var KeySignature = (function () {
     var keyContainerHTML = '<div class="' + this.keySignatureContainerClassName + '"></div>';
     var targetBar = $(this.bar.reference);
 
-    targetBar.append(keyContainerHTML);
+    if (targetBar.children(".clef").length > 0) {
+      //if the bar has a clef, append it after it. Otherwise it will append the keysignature before the clef
+      targetBar.children(".clef").after(keyContainerHTML);
+    } else {
+      targetBar.children(".line-container").last().after(keyContainerHTML); //append it after the last line-container otherwise
+    }
   };
 
   KeySignature.prototype.setKeyContainerReference = function setKeyContainerReference() {
@@ -388,9 +398,12 @@ var KeySignature = (function () {
 
   KeySignature.prototype.setKeyContainerCSS = function setKeyContainerCSS() {
 
+    var leftPadding = $(this.bar.reference).height() / 4;
+
     var style = { "display": "inline-block",
       "height": "100%",
-      "vertical-align": "top"
+      "vertical-align": "top",
+      "padding-left": leftPadding + "px"
     };
 
     $(this.keySignatureContainerReference).css(style);
@@ -403,17 +416,25 @@ var KeySignature = (function () {
     container.append(keyHTML); //append new sharp
   };
 
-  KeySignature.prototype.keyCSS = function keyCSS() {
+  KeySignature.prototype.keyCSS = function keyCSS(index) {
+    var topOffsetVal = $(this.bar.reference).height() / 4; //height of space between bar lines
+    var topOffsetMult = undefined;
+    if (this.typeOf === "sharps") {
+      topOffsetMult = this.sharpsDictionary(index);
+    } else if (this.typeOf === "flats") {
+      topOffsetMult = this.flatsDictionary(index);
+    }
+
     var container = $(this.keySignatureContainerReference);
     var newestElement = container.children().last(); //get the newly added element
 
-    var width = $(this.bar.reference).height() / 2.5;
+    var width = $(this.bar.reference).height() / 2.5; //so the size scales when the height of the bar is changed
 
     var style = { "display": "inline-block",
-      //"background-color":"black",
-      "border": "1px solid black",
       "vertical-align": "top",
-      "width": width + "px"
+      "width": width + "px",
+      "position": "relative",
+      "top": topOffsetVal * topOffsetMult
 
     };
 
@@ -424,34 +445,233 @@ var KeySignature = (function () {
     var container = $(this.keySignatureContainerReference); //key sig container
     var newestElement = container.children().last(); //latest instance of "key sig" which holds each sharp or flat
 
-    this.firstSharpLine(newestElement);
-    this.secondSharpLine(newestElement);
+    this.firstSharpLine(newestElement); //topmost horizontal line
+    this.secondSharpLine(newestElement); //bottom horizontal line
     this.thirdSharpLine(newestElement);
     this.fourthSharpLine(newestElement);
   };
 
-  KeySignature.prototype.firstSharpLine = function firstSharpLine(keySignature) {
-    var kSig = $(keySignature);
+  //topmost horizontal line
 
+  KeySignature.prototype.firstSharpLine = function firstSharpLine(keySignature) {
+    var kSig = $(keySignature); //target to append container too
+
+    var lineContanerHTML = '<div class="line-container line-container1"></div>';
+
+    var lineContainerCSS = { "height": "0",
+      "transform": "rotate(-10deg)",
+      "position": "relative",
+      "bottom": this.sharpHorizontalLineThickness / 2 };
+
+    //makes the line sit atop the bar line instead of below it
+    kSig.append(lineContanerHTML);
+
+    var lineContainer = kSig.children().last(); //find container just added
+    lineContainer.css(lineContainerCSS); //apply css to it
+
+    var width = $(this.bar.reference).height() / 3; //width of the line, slightly less the than the width of the Key Signature so there is a gap between sharps/flats
     var lineHTML = '<div class="line line1"></div>';
+
+    var lineCSS = { "width": width + "px",
+      "height": this.sharpHorizontalLineThickness + "px",
+      "background-color": "black"
+
+    };
+
+    lineContainer.append(lineHTML);
+    lineContainer.children().css(lineCSS);
   };
 
-  KeySignature.prototype.secondSharpLine = function secondSharpLine(keySignature) {
-    var kSig = $(keySignature);
+  //bottom horizontal line
 
+  KeySignature.prototype.secondSharpLine = function secondSharpLine(keySignature) {
+    var kSig = $(keySignature); //target to append container too
+
+    var lineContanerHTML = '<div class="line-container line-container2"></div>';
+    var topOffset = $(this.bar.reference).height() / 4; //same as the distance between lines
+
+    var lineContainerCSS = { "height": "0",
+      "transform": "rotate(-10deg)",
+      "position": "relative",
+      "top": topOffset - this.sharpHorizontalLineThickness / 2 };
+
+    //subtract half the thickness of the line so it sits atop the bar line
+    kSig.append(lineContanerHTML);
+
+    var lineContainer = kSig.children().last(); //find container just added
+    lineContainer.css(lineContainerCSS); //apply css to it
+
+    var width = $(this.bar.reference).height() / 3; //width of the line, slightly less the than the width of the Key Signature so there is a gap between sharps/flats
     var lineHTML = '<div class="line line2"></div>';
+
+    var lineCSS = { "width": width + "px",
+      "height": this.sharpHorizontalLineThickness + "px",
+      "background-color": "black"
+
+    };
+
+    lineContainer.append(lineHTML);
+    lineContainer.children().css(lineCSS);
   };
 
   KeySignature.prototype.thirdSharpLine = function thirdSharpLine(keySignature) {
-    var kSig = $(keySignature);
+    var kSig = $(keySignature); //target to append container too
+
+    var widthOfHorizontalLine = $(this.bar.reference).height() / 3;
+
+    var lengthOfVerticalLine = $(this.bar.reference).height() / 2;
+
+    var lineContanerHTML = '<div class="line-container line-container3"></div>';
+    var topOffset = $(this.bar.reference).height() / 4; //same as the distance between lines
+
+    var lineContainerCSS = { "height": "0",
+      "position": "relative",
+      "bottom": lengthOfVerticalLine / 4, //subtract half the thickness of the line so it sits atop the bar line
+      "left": widthOfHorizontalLine / 5
+    };
+
+    kSig.append(lineContanerHTML);
+
+    var lineContainer = kSig.children().last(); //find container just added
+    lineContainer.css(lineContainerCSS); //apply css to it
 
     var lineHTML = '<div class="line line3"></div>';
+
+    var lineCSS = { "width": this.sharpVerticalLineThickness + "px",
+      "height": lengthOfVerticalLine + "px",
+      "background-color": "black"
+
+    };
+
+    lineContainer.append(lineHTML);
+    lineContainer.children().css(lineCSS);
   };
 
   KeySignature.prototype.fourthSharpLine = function fourthSharpLine(keySignature) {
-    var kSig = $(keySignature);
+    var kSig = $(keySignature); //target to append container too
+
+    var widthOfHorizontalLine = $(this.bar.reference).height() / 3;
+
+    var lengthOfVerticalLine = $(this.bar.reference).height() / 2;
+
+    var lineContanerHTML = '<div class="line-container line-container4"></div>';
+    var topOffset = $(this.bar.reference).height() / 4; //same as the distance between lines
+
+    var lineContainerCSS = { "height": "0",
+      "position": "relative",
+      "bottom": lengthOfVerticalLine / 4, //subtract half the thickness of the line so it sits atop the bar line
+      "left": widthOfHorizontalLine / 5 * 3
+    };
+
+    kSig.append(lineContanerHTML);
+
+    var lineContainer = kSig.children().last(); //find container just added
+    lineContainer.css(lineContainerCSS); //apply css to it
 
     var lineHTML = '<div class="line line4"></div>';
+
+    var lineCSS = { "width": this.sharpVerticalLineThickness + "px",
+      "height": lengthOfVerticalLine + "px",
+      "background-color": "black"
+
+    };
+
+    lineContainer.append(lineHTML);
+    lineContainer.children().css(lineCSS);
+  };
+
+  KeySignature.prototype.sharpsDictionary = function sharpsDictionary(index) {
+    var dictionary = [-0.5, 1, -1, 0.5, 2, 0, 1.5];
+
+    if (this.instrument.clef === "bass") {
+      //bass clef moves everything down a whole line or space
+      return dictionary[index] + 1;
+    }
+
+    return dictionary[index];
+  };
+
+  KeySignature.prototype.drawFlat = function drawFlat() {
+    var container = $(this.keySignatureContainerReference); //key sig container
+    var newestElement = container.children().last();
+
+    this.flatHead(newestElement);
+    this.flatStem(newestElement);
+  };
+
+  KeySignature.prototype.flatHead = function flatHead(keySignature) {
+    var newestElement = $(keySignature);
+    var flatHeadContainerHTML = '<div class="flat-head-container"></div>';
+
+    var flatHeadContainerCSS = { "height": "0px"
+    };
+
+    //"transform": "rotate(-20deg)",
+
+    newestElement.append(flatHeadContainerHTML);
+
+    var flatHeadContainer = newestElement.children().last();
+    flatHeadContainer.css(flatHeadContainerCSS);
+
+    var flatHeadHTML = '<div class="flat-head"></div>';
+
+    var height = $(this.bar.reference).height() / 4; //size of space between lines
+
+    var flatHeadCSS = { "border": "1px solid black",
+      "height": height + "px",
+      "width": height * 0.80 + "px",
+      "border-width": height / 4 + "px " + height / 2.5 + "px " + height / 8 + "px " + height / 8 + "px",
+      "border-radius": height * 1.15 + "px " + height * 1.15 / 2 + "px " + height * 1.15 + "px " + "0px",
+      "box-sizing": "border-box"
+
+    };
+    // (height / 4) + "px " + (height / 3) + "px " + (height / 8) + "px " + (height / 8) + "px"
+
+    flatHeadContainer.append(flatHeadHTML);
+    var flatHead = flatHeadContainer.children();
+
+    flatHead.css(flatHeadCSS);
+  };
+
+  KeySignature.prototype.flatStem = function flatStem(keySignature) {
+    var newestElement = $(keySignature);
+    var flatStemContainerHTML = '<div class="flat-stem-container"></div>';
+
+    var flatStemContainerCSS = { "height": "0px"
+
+    };
+
+    newestElement.append(flatStemContainerHTML);
+
+    var flatStemContainer = newestElement.children().last();
+    flatStemContainer.css(flatStemContainerCSS);
+
+    var flatStemHTML = '<div class="flat-stem"></div>';
+
+    var height = $(this.bar.reference).height() / 4; //size of space between lines
+
+    var flatStemCSS = { "background-color": "black",
+      "height": height * 2.5 + "px",
+      "width": height / 4 + "px",
+      "position": "relative",
+      "bottom": height * 1.5 + "px"
+
+    };
+    flatStemContainer.append(flatStemHTML);
+    var flatHead = flatStemContainer.children();
+
+    flatHead.css(flatStemCSS);
+  };
+
+  KeySignature.prototype.flatsDictionary = function flatsDictionary(index) {
+    var dictionary = [1.5, 0, 2, 0.5, 2.5, 1, 3];
+
+    if (this.instrument.clef === "bass") {
+      //bass clef moves everything down a whole line or space
+      return dictionary[index] + 1;
+    }
+
+    return dictionary[index];
   };
 
   return KeySignature;
@@ -484,7 +704,7 @@ var Notation = (function () {
 
     this.keySignature = "C";
 
-    this.barHeight = 45; //height of bars and instrument name divs
+    this.barHeight = 35; //height of bars and instrument name divs
     this.marginAboveBar = 50;
     this.marginUnderBar = 60;
     this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)
