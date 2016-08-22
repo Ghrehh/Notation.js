@@ -199,6 +199,7 @@ class Note {
             "display": "inline-block",
             //"border-right": "1px solid blue",
             "box-sizing": "border-box",
+            "vertical-align": "top",
                   
           }
   } //returns css attributes for note container

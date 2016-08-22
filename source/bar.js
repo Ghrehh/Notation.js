@@ -1,5 +1,6 @@
 import Note from "./note";
 import KeySignature from "./keySignature";
+import TimeSignature from "./timeSignature";
 
 class Bar {
   constructor(instrument, id){
@@ -70,7 +71,8 @@ class Bar {
     
     if (this.id === 0) {
       this.addClef(newBar);
-      this.addKeySignature("sharps", 5);
+      this.changeKeySignature("sharps", 0);
+      this.changeTimeSignature(4, 4); //default to a 4/4 time signature because i'm a pleb
     }
 
   }
@@ -193,8 +195,20 @@ class Bar {
   }
   
   
-  addKeySignature(typeOf, numberOf) {
+  changeKeySignature(typeOf, numberOf) {
     this.keySignature = new KeySignature(this, typeOf, numberOf);
+  }
+  
+  changeTimeSignature(top, bottom){
+    if (typeof top != "number"){
+      throw "time signatures must be be numeric values"
+    }
+    
+    if (typeof bottom != "number"){
+      throw "time signatures must be be numeric values"
+    }
+    
+    this.timeSignature = new TimeSignature(this, top, bottom);
   }
   
 }

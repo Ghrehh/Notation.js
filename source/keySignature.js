@@ -29,6 +29,7 @@ class KeySignature {
   private
   
   initialize(){
+    this.removeOldKeySignature();
     this.appendKeyContainer();
     this.setKeyContainerReference();
     this.setKeyContainerCSS();
@@ -52,6 +53,14 @@ class KeySignature {
     
   }
   
+  removeOldKeySignature(){ //removes the old key signature if one exists
+    let bar = $(this.bar.reference);
+    let oldKey = bar.children("." + this.keySignatureContainerClassName)
+    
+    if (oldKey.length > 0) {
+      oldKey.remove();
+    }
+  }
   //containers the keysignature
   appendKeyContainer(){
     let keyContainerHTML = '<div class="' + this.keySignatureContainerClassName + '"></div>'

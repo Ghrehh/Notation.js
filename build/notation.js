@@ -15,6 +15,10 @@ var _keySignature = require("./keySignature");
 
 var _keySignature2 = _interopRequireDefault(_keySignature);
 
+var _timeSignature = require("./timeSignature");
+
+var _timeSignature2 = _interopRequireDefault(_timeSignature);
+
 var Bar = (function () {
   function Bar(instrument, id) {
     _classCallCheck(this, Bar);
@@ -83,7 +87,8 @@ var Bar = (function () {
 
     if (this.id === 0) {
       this.addClef(newBar);
-      this.addKeySignature("sharps", 5);
+      this.changeKeySignature("sharps", 0);
+      this.changeTimeSignature(4, 4); //default to a 4/4 time signature because i'm a pleb
     }
   };
 
@@ -190,8 +195,20 @@ var Bar = (function () {
     targetBar.children(".clef").css(clefCSS);
   };
 
-  Bar.prototype.addKeySignature = function addKeySignature(typeOf, numberOf) {
+  Bar.prototype.changeKeySignature = function changeKeySignature(typeOf, numberOf) {
     this.keySignature = new _keySignature2["default"](this, typeOf, numberOf);
+  };
+
+  Bar.prototype.changeTimeSignature = function changeTimeSignature(top, bottom) {
+    if (typeof top != "number") {
+      throw "time signatures must be be numeric values";
+    }
+
+    if (typeof bottom != "number") {
+      throw "time signatures must be be numeric values";
+    }
+
+    this.timeSignature = new _timeSignature2["default"](this, top, bottom);
   };
 
   return Bar;
@@ -200,7 +217,7 @@ var Bar = (function () {
 exports["default"] = Bar;
 module.exports = exports["default"];
 
-},{"./keySignature":3,"./note":5}],2:[function(require,module,exports){
+},{"./keySignature":3,"./note":5,"./timeSignature":6}],2:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -356,6 +373,7 @@ var KeySignature = (function () {
   }
 
   KeySignature.prototype.initialize = function initialize() {
+    this.removeOldKeySignature();
     this.appendKeyContainer();
     this.setKeyContainerReference();
     this.setKeyContainerCSS();
@@ -372,6 +390,16 @@ var KeySignature = (function () {
       } else {
         throw "valid type of keysignature was not passed, the valid paramaters are either 'sharps' or 'flats'";
       }
+    }
+  };
+
+  KeySignature.prototype.removeOldKeySignature = function removeOldKeySignature() {
+    //removes the old key signature if one exists
+    var bar = $(this.bar.reference);
+    var oldKey = bar.children("." + this.keySignatureContainerClassName);
+
+    if (oldKey.length > 0) {
+      oldKey.remove();
     }
   };
 
@@ -1036,7 +1064,8 @@ var Note = (function () {
       //"background-color": "#a4b4d6",
       "display": "inline-block",
       //"border-right": "1px solid blue",
-      "box-sizing": "border-box"
+      "box-sizing": "border-box",
+      "vertical-align": "top"
 
     };
   };
@@ -1124,6 +1153,161 @@ var Note = (function () {
 })();
 
 exports["default"] = Note;
+module.exports = exports["default"];
+
+},{}],6:[function(require,module,exports){
+"use strict";
+
+exports.__esModule = true;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var TimeSignature = (function () {
+  function TimeSignature(bar, top, bottom) {
+    _classCallCheck(this, TimeSignature);
+
+    this.bar = bar;
+    this.top = top;
+    this.bottom = bottom;
+
+    this.timeSignatureContainerReference;
+    this.timeSignatureTopReference;
+    this.timeSignatureBottomReference;
+
+    this.initialize();
+  }
+
+  TimeSignature.prototype.initialize = function initialize() {
+    this.removeOldTimeSignature();
+
+    this.printTimeSignatureContainer();
+    this.setTimeSignatureContainerReference();
+    this.setTimeSignatureContainerCSS();
+
+    this.printTimeSignatureTop();
+    this.setTimeSignatureTopReference();
+    this.setTimeSignatureTopCSS();
+
+    this.printTimeSignatureBottom();
+    this.setTimeSignatureBottomReference();
+    this.setTimeSignatureBottomCSS();
+  };
+
+  TimeSignature.prototype.removeOldTimeSignature = function removeOldTimeSignature() {
+    //removes the old time signature if one exists
+    var bar = $(this.bar.reference);
+    var oldTimeSignature = bar.children(".time-signature-container");
+
+    if (oldTimeSignature.length > 0) {
+      oldTimeSignature.remove();
+    }
+  };
+
+  TimeSignature.prototype.printTimeSignatureContainer = function printTimeSignatureContainer() {
+    var bar = $(this.bar.reference);
+    var html = '<div class="time-signature-container"></div>';
+    //bar.append(html);
+
+    if (bar.children(".key-signature-container").length > 0) {
+      bar.children(".key-signature-container").after(html);
+    } else if (bar.children(".clef").length > 0) {
+      bar.children(".key-signature-container").after(html);
+    } else {
+      bar.children(".line-container").last().after(html);
+    }
+  };
+
+  TimeSignature.prototype.setTimeSignatureContainerReference = function setTimeSignatureContainerReference() {
+    var bar = $(this.bar.reference);
+    var container = bar.children(".time-signature-container");
+    this.timeSignatureContainerReference = container;
+  };
+
+  TimeSignature.prototype.setTimeSignatureContainerCSS = function setTimeSignatureContainerCSS() {
+    var container = $(this.timeSignatureContainerReference);
+    var padding = $(this.bar.reference).height() / 4;
+    var containerCSS = { "display": "inline-block",
+      "height": "100%",
+      "vertical-align": "top",
+      "padding-left": padding + "px",
+      "padding-right": padding * 2 + "px"
+
+    };
+
+    container.css(containerCSS);
+  };
+
+  TimeSignature.prototype.printTimeSignatureTop = function printTimeSignatureTop() {
+    var timeSignatureContainer = $(this.timeSignatureContainerReference);
+    var html = '<p class="time-signature-top">' + this.top + '</p>';
+
+    timeSignatureContainer.append(html);
+  };
+
+  TimeSignature.prototype.setTimeSignatureTopReference = function setTimeSignatureTopReference() {
+    var timeSignatureContainer = $(this.timeSignatureContainerReference);
+    var top = timeSignatureContainer.children(".time-signature-top");
+    this.timeSignatureTopReference = top;
+  };
+
+  TimeSignature.prototype.setTimeSignatureTopCSS = function setTimeSignatureTopCSS() {
+    var top = $(this.timeSignatureTopReference);
+
+    var lineHeight = $(this.bar.reference).height() / 2;
+    var topCSS = { "display": "inline-block",
+      "vertical-align": "top",
+      "margin": "0px",
+      "font-weight": "800",
+      "line-height": lineHeight + "px",
+      "font-size": lineHeight * 1.50 + "px",
+      "display": "block"
+
+    };
+
+    top.css(topCSS);
+  };
+
+  TimeSignature.prototype.printTimeSignatureBottom = function printTimeSignatureBottom() {
+    var timeSignatureContainer = $(this.timeSignatureContainerReference);
+    var html = '<p class="time-signature-bottom">' + this.bottom + '</p>';
+
+    timeSignatureContainer.append(html);
+  };
+
+  TimeSignature.prototype.setTimeSignatureBottomReference = function setTimeSignatureBottomReference() {
+    var timeSignatureContainer = $(this.timeSignatureContainerReference);
+    var bottom = timeSignatureContainer.children(".time-signature-bottom");
+    this.timeSignatureTopReference = bottom;
+  };
+
+  TimeSignature.prototype.setTimeSignatureBottomCSS = function setTimeSignatureBottomCSS() {
+    var bottom = $(this.timeSignatureTopReference);
+
+    var lineHeight = $(this.bar.reference).height() / 2;
+    var bottomCSS = { "display": "inline-block",
+      "vertical-align": "top",
+      "margin": "0px",
+      "font-weight": "800",
+      "line-height": lineHeight + "px",
+      "font-size": lineHeight * 1.50 + "px",
+      "display": "block"
+
+    };
+
+    bottom.css(bottomCSS);
+  };
+
+  return TimeSignature;
+})();
+
+exports["default"] = TimeSignature;
+
+/*'<div class="time-signature-top">' +
+    '<p>' + this.top + '</p>' +
+  '</div>' +
+  '<div class="time-signature-bottom">' +
+    '<p>' + this.bottom + '</p>' +
+  '</div>' +*/
 module.exports = exports["default"];
 
 },{}]},{},[4]);
