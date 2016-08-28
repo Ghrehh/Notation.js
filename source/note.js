@@ -1,7 +1,8 @@
 class Note {
-  constructor(bar, parentNote){
+  constructor(bar, pitch, duration, parentNote){
     this.bar = bar;
     this.parentNote = parentNote;
+    this.childNotes = [];
     this.barReference = this.bar.reference;
     this.containerClassName = "note-container";
     this.className = "note";
@@ -11,25 +12,30 @@ class Note {
     this.noteContainerReference; //holds note container jquery object
     this.noteReference; //and the same for the note
     this.noteHeadReference;
+    this.ledgerLineContainerReference;
+    this.ledgerLineReference;
     this.noteStemContainerReference;
     this.noteStemReference;
     
-    this.pitch;
+    this.pitch = pitch;
+    this.duration = duration;
+    if (this.duration === undefined) {
+      this.duration = "quarter-note"
+    }
     this.accidental;
     this.octave;
-    this.duration;
     this.tuplet;
     this.rest;
     
+    this.stemDirection = "down";
     
     
-    this.wholeNoteDuration = 4.0;
-    this.halfNoteDuration = this.wholeNoteDuration / 2;
-    this.quarterNoteDuration = this.halfNoteDuration / 2;
-    this.eighthNoteDuration = this.quarterNoteDuration / 2;
-    this.sixteenthNoteDuration = this.eighthNoteDuration / 2;
-    this.thirtysecondNoteDuration = this.sixteenthNoteDuration / 2;
+    this.noteParameters = this.getNoteParameters(this.pitch);
+    if (this.noteParameters === undefined) {
+      throw "note/octave" + this.pitch + "not recognised in note.getNoteParameters()"
+    }
     
+  
   }
   
   initialize(){
@@ -58,18 +64,34 @@ class Note {
     this.setNoteHeadReference();
     this.setNoteHeadCSS();
     
-    //note stem container, anything rotated in a nother roated element needs to have a 0 height 0 width container to stop strange things from happening when the height is adjusted
-    this.printNoteStemContainer();
-    this.setNoteStemContainerReference();
-    this.setNoteStemContainerCSS();
+    //ledger lines
+    if (this.noteParameters.ledgerLinePosition !== undefined){
+      for(let i = 0; i < this.noteParameters.ledgerLineNumber; i++){
+        this.printLedgerLineContainer();
+        this.setLedgerLineContainerReference();
+        this.setLedgerLineContainerCSS();
+        
+        this.printLedgerLine();
+        this.setLedgerLineReference();
+        this.setLedgerLineCSS(i);
+      }
+    }
     
-    this.printNoteStem();
-    this.setNoteStemReference();
-    this.setNoteStemCSS();
+    //note stem container, anything rotated in a nother roated element needs to have a 0 height 0 width container to stop strange things from happening when the height is adjusted
+    if (this.duration !== "whole-note") {
+      this.printNoteStemContainer();
+      this.setNoteStemContainerReference();
+      this.setNoteStemContainerCSS();
+      
+      this.printNoteStem();
+      this.setNoteStemReference();
+      this.setNoteStemCSS();
+    }
+    
+    
   }
   
   private
-  
   printNoteContainer() {
     let noteContainerHTML = '<div class="' + this.containerClassName +'" id="' + this.noteContainerID +'"></div>';
   
@@ -88,6 +110,19 @@ class Note {
     
     $(this.noteReference).append(noteHeadHTML);
   }
+  
+  
+  printLedgerLineContainer(){
+    let ledgerLineContainerHTML = '<div class="ledger-line-container"></div>';
+    $(this.noteHeadReference).append(ledgerLineContainerHTML);
+  }
+  
+  printLedgerLine(){
+    let ledgerLineHTML = '<div class="ledger-line"></div>';
+    
+    $(this.ledgerLineContainerReference).append(ledgerLineHTML);
+  }
+  
   
   printNoteStemContainer(){
     let noteStemContainerHTML = '<div class="note-stem-container"></div>';
@@ -148,8 +183,16 @@ class Note {
     this.noteHeadReference = $(this.noteReference).children();
   }
   
+  setLedgerLineContainerReference(){
+    this.ledgerLineContainerReference = $(this.noteHeadReference).children(".ledger-line-container").last(); //should grab the most recent one in the event there are multiple ledger lines for a note
+  }
+  
+  setLedgerLineReference(){
+    this.ledgerLineReference = $(this.ledgerLineContainerReference).children();
+  }
+  
   setNoteStemContainerReference(){
-    this.noteStemContainerReference = $(this.noteHeadReference).children();
+    this.noteStemContainerReference = $(this.noteHeadReference).children(".note-stem-container");
   }
   
   setNoteStemReference(){
@@ -177,8 +220,19 @@ class Note {
   }
   
   setNoteHeadCSS(){
-    $(this.noteHeadReference).css(this.getNoteHeadCSS());
+    $(this.noteHeadReference).css(this.getNoteHeadCSS()); //set the values put on all note heads
+    //$(this.noteHeadReference).css(this.getNoteDurationParameters(this.duration)); //then the ones that are only put on an individual note duration
   }
+  
+  
+  setLedgerLineContainerCSS(){
+    $(this.ledgerLineContainerReference).css(this.getLedgerLineContainerCSS());
+  }
+  
+  setLedgerLineCSS(index){
+    $(this.ledgerLineReference).css(this.getLedgerLineCSS(index));
+  }
+  
   
   setNoteStemContainerCSS(){
     $(this.noteStemContainerReference).css(this.getNoteStemContainerCSS());
@@ -191,13 +245,42 @@ class Note {
   
   
   getNoteContainerCSS(){
+    let wholeNoteWidth = 4.0;
+    let halfNoteWidth =  wholeNoteWidth / 2;
+    let quarterNoteWidth =  halfNoteWidth / 2;
+    let eighthNoteWidth =  quarterNoteWidth / 2;
+    let sixteenthNoteWidth =  eighthNoteWidth / 2;
+    let thirtysecondNoteWidth =  sixteenthNoteWidth / 2;
+    
+    let widthMultiplier;
+    
+    switch(this.duration){
+      case "whole-note":
+        widthMultiplier = 2;
+        break;
+      case "half-note":
+        widthMultiplier = 1.3;
+        break;
+      case "quarter-note":
+        widthMultiplier = 1.1;
+        break;
+      case "eighth-note":
+        widthMultiplier = 0.90;
+        break;
+      case "sixteenth-note":
+        widthMultiplier = 0.70;
+        break;
+      case "thirty-second-note":
+        widthMultiplier = 0.60;
+        break;
+    }
+
+    
     let width = $(this.barReference).height();
     
     return {"height": "100%",
-            "width": width + "px",
-            //"background-color": "#a4b4d6",
+            "width": (width * widthMultiplier) + "px",
             "display": "inline-block",
-            //"border-right": "1px solid blue",
             "box-sizing": "border-box",
             "vertical-align": "top",
                   
@@ -217,7 +300,15 @@ class Note {
   
   getNoteHeadCSS(){
     let noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
-    let noteTopOffset = this.getNoteTopOffset(this.pitch);
+    
+    let background;
+    
+    if (this.duration === "whole-note" || this.duration === "half-note"){
+      background = "transparent";
+    }
+    else {
+      background = "black";
+    }
     
     return {
       "height": noteHeadHeight + "px",
@@ -229,8 +320,55 @@ class Note {
       "transform":"rotate(-15deg)",
       "margin":"auto",
       "position":"relative",
-      "top": "" + (noteHeadHeight * noteTopOffset) + "px",
+      "top": "" + (noteHeadHeight * this.noteParameters.topOffset) + "px",
+      "background-color": background,
       
+    }
+  }
+  
+  getLedgerLineContainerCSS(){
+    return {
+      "transform": "rotate(15deg)",
+      "height": "0px",
+      "width":"0px",
+    }
+  }
+  
+  getLedgerLineCSS(index){
+    let noteHeadHeight = $(this.barReference).height() / 4;
+    let noteHeadWidth = noteHeadHeight * 1.25; //same as the distance between lines
+    
+    let offset;
+    
+    if (this.noteParameters.ledgerLinePosition === "top"){
+      let barTop = $(this.noteContainerReference).offset().top;
+      
+      let idealLedgerLinePosition = barTop - (noteHeadHeight * (index + 1)); //basically moves every ledger line up one space
+      
+      let currentLedgerLinePosition = $(this.ledgerLineReference).offset().top;
+  
+      offset = idealLedgerLinePosition - currentLedgerLinePosition
+    }
+    else if (this.noteParameters.ledgerLinePosition === "bottom"){
+      let barTop = $(this.noteContainerReference).offset().top;
+      
+      let barHeight = (this.noteContainerReference).height();
+      
+      let idealLedgerLinePosition = (barTop + barHeight) + (noteHeadHeight * (index + 1)) - this.bar.widthOfBarLines; //basically moves every ledger line up one space
+      
+      let currentLedgerLinePosition = $(this.ledgerLineReference).offset().top;
+  
+      offset = idealLedgerLinePosition - currentLedgerLinePosition
+    }
+
+    
+    return {
+      "height": this.bar.widthOfBarLines + "px",
+      "width": noteHeadWidth * 2.5 + "px",
+      "background-color": "black",
+      "position": "relative",
+      "right": noteHeadWidth / 1.20 + "px",
+      "top": offset + "px"
     }
   }
   
@@ -246,7 +384,17 @@ class Note {
     let noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
     let stemWidth = 1;
     let stemHeight = noteHeadHeight * 2.5;
-    let left = (noteHeadHeight * 1.25) - stemWidth - 1; // the addiontal minus 1 just seems to do the trick
+    let left;
+    let bottom;
+    
+    if (this.noteParameters.stemDirection === "up") {
+      left = (noteHeadHeight * 1.25) - stemWidth - 1; // the addiontal minus 1 just seems to do the trick
+      bottom = stemHeight - (noteHeadHeight / 2.60);
+    }
+    else if (this.noteParameters.stemDirection === "down") {
+      left = 0;
+      bottom = 0;
+    }
     
     return {
       "height" : stemHeight,
@@ -254,7 +402,7 @@ class Note {
       "background-color": "black",
       "position": "relative",
       "left" : left,
-      "bottom" : stemHeight - (noteHeadHeight / 2.60),
+      "bottom" : bottom,
     }
   }
   
@@ -269,19 +417,28 @@ class Note {
     return $(this.noteContainerReference).children().length;
   }
   
-  getNoteTopOffset(note){
-    let noteDictionary = {"E": 0,
-                          "D": 0.5,
-                          "C": 1,
-                          "B": 1.5,
-                          "A": 2,
-                          "G": 2.5,
-                          "F": 3,
+  getNoteParameters(note){
+    
+    let noteDictionary = {"C6": {topOffset:-2.5, stemDirection: "down", ledgerLinePosition: "top", ledgerLineNumber: 2},
+                          "B5": {topOffset:-2.0, stemDirection: "down", ledgerLinePosition: "top", ledgerLineNumber: 1},
+                          "A5": {topOffset:-1.5, stemDirection: "down", ledgerLinePosition: "top", ledgerLineNumber: 1},
+                          "G5": {topOffset:-1.0, stemDirection: "down"},
+                          "F5": {topOffset:-0.5, stemDirection: "down"},
+                          "E5": {topOffset: 0.0, stemDirection: "down"},
+                          "D5": {topOffset: 0.5, stemDirection: "down"},
+                          "C5": {topOffset: 1.0, stemDirection: "down"},
+                          "B4": {topOffset: 1.5, stemDirection: "up"},
+                          "A4": {topOffset: 2.0, stemDirection: "up"},
+                          "G4": {topOffset: 2.5, stemDirection: "up"},
+                          "F4": {topOffset: 3.0, stemDirection: "up"},
+                          "E4": {topOffset: 3.5, stemDirection: "up"},
+                          "D4": {topOffset: 4.0, stemDirection: "up"},
+                          "C4": {topOffset: 4.5, stemDirection: "up",  ledgerLinePosition: "bottom", ledgerLineNumber: 1},
+                          "B3": {topOffset: 5.0, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 1},
                         }
                         
     return noteDictionary[note];
   }
-  
-  
+
 }
 export default Note;

@@ -49,17 +49,32 @@ var Bar = (function () {
     this.printBar();
   };
 
-  Bar.prototype.addNote = function addNote(n, addNoteToNote) {
+  Bar.prototype.addNote = function addNote(n, duration, addNoteToNote) {
     //{ pitch = "A", accidental = "sharp/flat/natural", octave = 3, duration = 4 }
-    var note = new _note2["default"](this);
-    note.pitch = n;
-    //note.octave = 3;
+    var note = new _note2["default"](this, n, duration, addNoteToNote);
     note.initialize();
 
-    this.notes.push([note]);
+    if (addNoteToNote === undefined) {
+      //only add it to the bar.notes[] if it's the first note added of a chord
+      this.notes.push(note);
+    } else {
+      addNoteToNote.childNotes.push(note);
+    }
+    return note;
+  };
 
-    /*let note2 = new Note(this, note);
-    note2.initialize();*/
+  //returns a note from the bar, index starting at 1 not 0
+
+  Bar.prototype.note = function note(noteIndex) {
+    var note = this.notes[noteIndex - 1];
+
+    if (note === undefined) {
+      var instrument = this.instrument.id;
+      var bar = this.bar.id;
+      throw "unable to find the note of [index: " + noteIndex + "] in the [bar: " + bar + "] in [instrument: " + instrument + "]";
+    } else {
+      return note;
+    }
   };
 
   Bar.prototype.printBar = function printBar() {
@@ -86,6 +101,7 @@ var Bar = (function () {
     this.createLines(newBar); //adds lines to it
 
     if (this.id === 0) {
+      //only gets run on the first bar that is added by default, sets up the clef, time sig and key sig. Should probably break this into a seperate function
       this.addClef(newBar);
       this.changeKeySignature("sharps", 0);
       this.changeTimeSignature(4, 4); //default to a 4/4 time signature because i'm a pleb
@@ -211,6 +227,17 @@ var Bar = (function () {
     this.timeSignature = new _timeSignature2["default"](this, top, bottom);
   };
 
+  Bar.prototype.removeTimeSignature = function removeTimeSignature() {
+    if (this.timeSignature === undefined) {
+      var instrument = this.instrument.id;
+      var bar = this.id;
+      throw "the time signature cannot be removed from [instrument: " + instrument + ", bar: " + bar + "] as one does not currently exist.";
+    } else {
+      this.timeSignature.removeOldTimeSignature();
+      this.timeSignature = undefined;
+    }
+  };
+
   return Bar;
 })();
 
@@ -245,6 +272,15 @@ var Instrument = (function () {
 
     this.initialize();
   }
+
+  //this calls the notation class method of the same name but returns the added bar for the instrument it's called on so it can be stored as a variable
+
+  Instrument.prototype.addBar = function addBar() {
+    this.notation.addBar();
+    return this.bars[this.bars.length - 1];
+  };
+
+  //the method that is actually called to add the bar
 
   Instrument.prototype.newBar = function newBar() {
     var bar = new _bar2['default'](this, this.currentNumberOfBars());
@@ -374,9 +410,13 @@ var KeySignature = (function () {
 
   KeySignature.prototype.initialize = function initialize() {
     this.removeOldKeySignature();
-    this.appendKeyContainer();
-    this.setKeyContainerReference();
-    this.setKeyContainerCSS();
+
+    if (this.numberOf > 0) {
+      //doesn't get run if the numberOf is 0, but the container still gets deleted
+      this.appendKeyContainer();
+      this.setKeyContainerReference();
+      this.setKeyContainerCSS();
+    }
 
     for (var i = 0; i < this.numberOf; i++) {
 
@@ -733,8 +773,8 @@ var Notation = (function () {
     this.keySignature = "C";
 
     this.barHeight = 35; //height of bars and instrument name divs
-    this.marginAboveBar = 50;
-    this.marginUnderBar = 60;
+    this.marginAboveBar = this.barHeight;
+    this.marginUnderBar = this.barHeight;
     this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)
 
     if (container == undefined) {
@@ -878,11 +918,12 @@ exports.__esModule = true;
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Note = (function () {
-  function Note(bar, parentNote) {
+  function Note(bar, pitch, duration, parentNote) {
     _classCallCheck(this, Note);
 
     this.bar = bar;
     this.parentNote = parentNote;
+    this.childNotes = [];
     this.barReference = this.bar.reference;
     this.containerClassName = "note-container";
     this.className = "note";
@@ -892,22 +933,27 @@ var Note = (function () {
     this.noteContainerReference; //holds note container jquery object
     this.noteReference; //and the same for the note
     this.noteHeadReference;
+    this.ledgerLineContainerReference;
+    this.ledgerLineReference;
     this.noteStemContainerReference;
     this.noteStemReference;
 
-    this.pitch;
+    this.pitch = pitch;
+    this.duration = duration;
+    if (this.duration === undefined) {
+      this.duration = "quarter-note";
+    }
     this.accidental;
     this.octave;
-    this.duration;
     this.tuplet;
     this.rest;
 
-    this.wholeNoteDuration = 4.0;
-    this.halfNoteDuration = this.wholeNoteDuration / 2;
-    this.quarterNoteDuration = this.halfNoteDuration / 2;
-    this.eighthNoteDuration = this.quarterNoteDuration / 2;
-    this.sixteenthNoteDuration = this.eighthNoteDuration / 2;
-    this.thirtysecondNoteDuration = this.sixteenthNoteDuration / 2;
+    this.stemDirection = "down";
+
+    this.noteParameters = this.getNoteParameters(this.pitch);
+    if (this.noteParameters === undefined) {
+      throw "note/octave" + this.pitch + "not recognised in note.getNoteParameters()";
+    }
   }
 
   Note.prototype.initialize = function initialize() {
@@ -935,14 +981,29 @@ var Note = (function () {
     this.setNoteHeadReference();
     this.setNoteHeadCSS();
 
-    //note stem container, anything rotated in a nother roated element needs to have a 0 height 0 width container to stop strange things from happening when the height is adjusted
-    this.printNoteStemContainer();
-    this.setNoteStemContainerReference();
-    this.setNoteStemContainerCSS();
+    //ledger lines
+    if (this.noteParameters.ledgerLinePosition !== undefined) {
+      for (var i = 0; i < this.noteParameters.ledgerLineNumber; i++) {
+        this.printLedgerLineContainer();
+        this.setLedgerLineContainerReference();
+        this.setLedgerLineContainerCSS();
 
-    this.printNoteStem();
-    this.setNoteStemReference();
-    this.setNoteStemCSS();
+        this.printLedgerLine();
+        this.setLedgerLineReference();
+        this.setLedgerLineCSS(i);
+      }
+    }
+
+    //note stem container, anything rotated in a nother roated element needs to have a 0 height 0 width container to stop strange things from happening when the height is adjusted
+    if (this.duration !== "whole-note") {
+      this.printNoteStemContainer();
+      this.setNoteStemContainerReference();
+      this.setNoteStemContainerCSS();
+
+      this.printNoteStem();
+      this.setNoteStemReference();
+      this.setNoteStemCSS();
+    }
   };
 
   Note.prototype.printNoteContainer = function printNoteContainer() {
@@ -961,6 +1022,17 @@ var Note = (function () {
     var noteHeadHTML = '<div class="note-head"></div>';
 
     $(this.noteReference).append(noteHeadHTML);
+  };
+
+  Note.prototype.printLedgerLineContainer = function printLedgerLineContainer() {
+    var ledgerLineContainerHTML = '<div class="ledger-line-container"></div>';
+    $(this.noteHeadReference).append(ledgerLineContainerHTML);
+  };
+
+  Note.prototype.printLedgerLine = function printLedgerLine() {
+    var ledgerLineHTML = '<div class="ledger-line"></div>';
+
+    $(this.ledgerLineContainerReference).append(ledgerLineHTML);
   };
 
   Note.prototype.printNoteStemContainer = function printNoteStemContainer() {
@@ -1018,8 +1090,16 @@ var Note = (function () {
     this.noteHeadReference = $(this.noteReference).children();
   };
 
+  Note.prototype.setLedgerLineContainerReference = function setLedgerLineContainerReference() {
+    this.ledgerLineContainerReference = $(this.noteHeadReference).children(".ledger-line-container").last(); //should grab the most recent one in the event there are multiple ledger lines for a note
+  };
+
+  Note.prototype.setLedgerLineReference = function setLedgerLineReference() {
+    this.ledgerLineReference = $(this.ledgerLineContainerReference).children();
+  };
+
   Note.prototype.setNoteStemContainerReference = function setNoteStemContainerReference() {
-    this.noteStemContainerReference = $(this.noteHeadReference).children();
+    this.noteStemContainerReference = $(this.noteHeadReference).children(".note-stem-container");
   };
 
   Note.prototype.setNoteStemReference = function setNoteStemReference() {
@@ -1045,7 +1125,16 @@ var Note = (function () {
   };
 
   Note.prototype.setNoteHeadCSS = function setNoteHeadCSS() {
-    $(this.noteHeadReference).css(this.getNoteHeadCSS());
+    $(this.noteHeadReference).css(this.getNoteHeadCSS()); //set the values put on all note heads
+    //$(this.noteHeadReference).css(this.getNoteDurationParameters(this.duration)); //then the ones that are only put on an individual note duration
+  };
+
+  Note.prototype.setLedgerLineContainerCSS = function setLedgerLineContainerCSS() {
+    $(this.ledgerLineContainerReference).css(this.getLedgerLineContainerCSS());
+  };
+
+  Note.prototype.setLedgerLineCSS = function setLedgerLineCSS(index) {
+    $(this.ledgerLineReference).css(this.getLedgerLineCSS(index));
   };
 
   Note.prototype.setNoteStemContainerCSS = function setNoteStemContainerCSS() {
@@ -1057,13 +1146,41 @@ var Note = (function () {
   };
 
   Note.prototype.getNoteContainerCSS = function getNoteContainerCSS() {
+    var wholeNoteWidth = 4.0;
+    var halfNoteWidth = wholeNoteWidth / 2;
+    var quarterNoteWidth = halfNoteWidth / 2;
+    var eighthNoteWidth = quarterNoteWidth / 2;
+    var sixteenthNoteWidth = eighthNoteWidth / 2;
+    var thirtysecondNoteWidth = sixteenthNoteWidth / 2;
+
+    var widthMultiplier = undefined;
+
+    switch (this.duration) {
+      case "whole-note":
+        widthMultiplier = 2;
+        break;
+      case "half-note":
+        widthMultiplier = 1.3;
+        break;
+      case "quarter-note":
+        widthMultiplier = 1.1;
+        break;
+      case "eighth-note":
+        widthMultiplier = 0.90;
+        break;
+      case "sixteenth-note":
+        widthMultiplier = 0.70;
+        break;
+      case "thirty-second-note":
+        widthMultiplier = 0.60;
+        break;
+    }
+
     var width = $(this.barReference).height();
 
     return { "height": "100%",
-      "width": width + "px",
-      //"background-color": "#a4b4d6",
+      "width": width * widthMultiplier + "px",
       "display": "inline-block",
-      //"border-right": "1px solid blue",
       "box-sizing": "border-box",
       "vertical-align": "top"
 
@@ -1087,7 +1204,14 @@ var Note = (function () {
 
   Note.prototype.getNoteHeadCSS = function getNoteHeadCSS() {
     var noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
-    var noteTopOffset = this.getNoteTopOffset(this.pitch);
+
+    var background = undefined;
+
+    if (this.duration === "whole-note" || this.duration === "half-note") {
+      background = "transparent";
+    } else {
+      background = "black";
+    }
 
     return {
       "height": noteHeadHeight + "px",
@@ -1099,8 +1223,53 @@ var Note = (function () {
       "transform": "rotate(-15deg)",
       "margin": "auto",
       "position": "relative",
-      "top": "" + noteHeadHeight * noteTopOffset + "px"
+      "top": "" + noteHeadHeight * this.noteParameters.topOffset + "px",
+      "background-color": background
 
+    };
+  };
+
+  Note.prototype.getLedgerLineContainerCSS = function getLedgerLineContainerCSS() {
+    return {
+      "transform": "rotate(15deg)",
+      "height": "0px",
+      "width": "0px"
+    };
+  };
+
+  Note.prototype.getLedgerLineCSS = function getLedgerLineCSS(index) {
+    var noteHeadHeight = $(this.barReference).height() / 4;
+    var noteHeadWidth = noteHeadHeight * 1.25; //same as the distance between lines
+
+    var offset = undefined;
+
+    if (this.noteParameters.ledgerLinePosition === "top") {
+      var barTop = $(this.noteContainerReference).offset().top;
+
+      var idealLedgerLinePosition = barTop - noteHeadHeight * (index + 1); //basically moves every ledger line up one space
+
+      var currentLedgerLinePosition = $(this.ledgerLineReference).offset().top;
+
+      offset = idealLedgerLinePosition - currentLedgerLinePosition;
+    } else if (this.noteParameters.ledgerLinePosition === "bottom") {
+      var barTop = $(this.noteContainerReference).offset().top;
+
+      var barHeight = this.noteContainerReference.height();
+
+      var idealLedgerLinePosition = barTop + barHeight + noteHeadHeight * (index + 1) - this.bar.widthOfBarLines; //basically moves every ledger line up one space
+
+      var currentLedgerLinePosition = $(this.ledgerLineReference).offset().top;
+
+      offset = idealLedgerLinePosition - currentLedgerLinePosition;
+    }
+
+    return {
+      "height": this.bar.widthOfBarLines + "px",
+      "width": noteHeadWidth * 2.5 + "px",
+      "background-color": "black",
+      "position": "relative",
+      "right": noteHeadWidth / 1.20 + "px",
+      "top": offset + "px"
     };
   };
 
@@ -1116,7 +1285,16 @@ var Note = (function () {
     var noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
     var stemWidth = 1;
     var stemHeight = noteHeadHeight * 2.5;
-    var left = noteHeadHeight * 1.25 - stemWidth - 1; // the addiontal minus 1 just seems to do the trick
+    var left = undefined;
+    var bottom = undefined;
+
+    if (this.noteParameters.stemDirection === "up") {
+      left = noteHeadHeight * 1.25 - stemWidth - 1; // the addiontal minus 1 just seems to do the trick
+      bottom = stemHeight - noteHeadHeight / 2.60;
+    } else if (this.noteParameters.stemDirection === "down") {
+      left = 0;
+      bottom = 0;
+    }
 
     return {
       "height": stemHeight,
@@ -1124,7 +1302,7 @@ var Note = (function () {
       "background-color": "black",
       "position": "relative",
       "left": left,
-      "bottom": stemHeight - noteHeadHeight / 2.60
+      "bottom": bottom
     };
   };
 
@@ -1136,14 +1314,24 @@ var Note = (function () {
     return $(this.noteContainerReference).children().length;
   };
 
-  Note.prototype.getNoteTopOffset = function getNoteTopOffset(note) {
-    var noteDictionary = { "E": 0,
-      "D": 0.5,
-      "C": 1,
-      "B": 1.5,
-      "A": 2,
-      "G": 2.5,
-      "F": 3
+  Note.prototype.getNoteParameters = function getNoteParameters(note) {
+
+    var noteDictionary = { "C6": { topOffset: -2.5, stemDirection: "down", ledgerLinePosition: "top", ledgerLineNumber: 2 },
+      "B5": { topOffset: -2.0, stemDirection: "down", ledgerLinePosition: "top", ledgerLineNumber: 1 },
+      "A5": { topOffset: -1.5, stemDirection: "down", ledgerLinePosition: "top", ledgerLineNumber: 1 },
+      "G5": { topOffset: -1.0, stemDirection: "down" },
+      "F5": { topOffset: -0.5, stemDirection: "down" },
+      "E5": { topOffset: 0.0, stemDirection: "down" },
+      "D5": { topOffset: 0.5, stemDirection: "down" },
+      "C5": { topOffset: 1.0, stemDirection: "down" },
+      "B4": { topOffset: 1.5, stemDirection: "up" },
+      "A4": { topOffset: 2.0, stemDirection: "up" },
+      "G4": { topOffset: 2.5, stemDirection: "up" },
+      "F4": { topOffset: 3.0, stemDirection: "up" },
+      "E4": { topOffset: 3.5, stemDirection: "up" },
+      "D4": { topOffset: 4.0, stemDirection: "up" },
+      "C4": { topOffset: 4.5, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 1 },
+      "B3": { topOffset: 5.0, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 1 }
     };
 
     return noteDictionary[note];
@@ -1193,6 +1381,8 @@ var TimeSignature = (function () {
     this.setTimeSignatureBottomCSS();
   };
 
+  //this needs to be public so it can be called from the bar method to removed a time signature
+
   TimeSignature.prototype.removeOldTimeSignature = function removeOldTimeSignature() {
     //removes the old time signature if one exists
     var bar = $(this.bar.reference);
@@ -1211,7 +1401,7 @@ var TimeSignature = (function () {
     if (bar.children(".key-signature-container").length > 0) {
       bar.children(".key-signature-container").after(html);
     } else if (bar.children(".clef").length > 0) {
-      bar.children(".key-signature-container").after(html);
+      bar.children(".clef").after(html);
     } else {
       bar.children(".line-container").last().after(html);
     }
@@ -1225,14 +1415,15 @@ var TimeSignature = (function () {
 
   TimeSignature.prototype.setTimeSignatureContainerCSS = function setTimeSignatureContainerCSS() {
     var container = $(this.timeSignatureContainerReference);
-    var padding = $(this.bar.reference).height() / 4;
+    var padding = $(this.bar.reference).height() / 5;
     var containerCSS = { "display": "inline-block",
       "height": "100%",
       "vertical-align": "top",
       "padding-left": padding + "px",
-      "padding-right": padding * 2 + "px"
+      "padding-right": padding * 2 + "px",
+      "position": "relative" };
 
-    };
+    //makes it sit above the lines
 
     container.css(containerCSS);
   };
@@ -1301,13 +1492,6 @@ var TimeSignature = (function () {
 })();
 
 exports["default"] = TimeSignature;
-
-/*'<div class="time-signature-top">' +
-    '<p>' + this.top + '</p>' +
-  '</div>' +
-  '<div class="time-signature-bottom">' +
-    '<p>' + this.bottom + '</p>' +
-  '</div>' +*/
 module.exports = exports["default"];
 
 },{}]},{},[4]);

@@ -16,6 +16,13 @@ class Instrument {
     this.initialize();
   }
   
+  //this calls the notation class method of the same name but returns the added bar for the instrument it's called on so it can be stored as a variable
+  addBar(){
+    this.notation.addBar();
+    return this.bars[this.bars.length - 1];
+  }
+  
+  //the method that is actually called to add the bar
   newBar(){
     var bar = new Bar(this, this.currentNumberOfBars());
     this.bars.push(bar);

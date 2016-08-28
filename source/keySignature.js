@@ -30,9 +30,12 @@ class KeySignature {
   
   initialize(){
     this.removeOldKeySignature();
-    this.appendKeyContainer();
-    this.setKeyContainerReference();
-    this.setKeyContainerCSS();
+    
+    if (this.numberOf > 0) { //doesn't get run if the numberOf is 0, but the container still gets deleted
+      this.appendKeyContainer();
+      this.setKeyContainerReference();
+      this.setKeyContainerCSS();
+    }
     
     for(let i = 0; i < this.numberOf; i++) {
       

@@ -30,6 +30,7 @@ class TimeSignature {
     
   }
   
+  //this needs to be public so it can be called from the bar method to removed a time signature
   removeOldTimeSignature(){ //removes the old time signature if one exists
     let bar = $(this.bar.reference);
     let oldTimeSignature = bar.children(".time-signature-container");
@@ -38,6 +39,9 @@ class TimeSignature {
       oldTimeSignature.remove();
     }
   }
+  
+  private
+
   
   printTimeSignatureContainer(){
     let bar = $(this.bar.reference);
@@ -48,7 +52,7 @@ class TimeSignature {
       bar.children(".key-signature-container").after(html);
     }
     else if(bar.children(".clef").length > 0) {
-      bar.children(".key-signature-container").after(html);
+      bar.children(".clef").after(html);
     }
     else {
       bar.children(".line-container").last().after(html);
@@ -64,12 +68,13 @@ class TimeSignature {
   
   setTimeSignatureContainerCSS() {
     let container = $(this.timeSignatureContainerReference);
-    let padding = $(this.bar.reference).height() / 4;
+    let padding = $(this.bar.reference).height() / 5;
     let containerCSS = {"display": "inline-block",
                         "height": "100%",
                         "vertical-align": "top",
                         "padding-left": padding + "px",
                         "padding-right": padding * 2 + "px",
+                        "position":"relative", //makes it sit above the lines
                         
                        }
                        

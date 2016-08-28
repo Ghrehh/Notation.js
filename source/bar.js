@@ -31,18 +31,33 @@ class Bar {
     this.printBar();
   }
   
-  addNote(n, addNoteToNote) {
+  addNote(n, duration, addNoteToNote) {
     //{ pitch = "A", accidental = "sharp/flat/natural", octave = 3, duration = 4 }
-    let note = new Note(this);
-    note.pitch = n;
-    //note.octave = 3;
+    let note = new Note(this, n, duration, addNoteToNote);
     note.initialize();
     
-    this.notes.push([note]);
+    if (addNoteToNote === undefined) { //only add it to the bar.notes[] if it's the first note added of a chord
+      this.notes.push(note);
+    }
+    else {
+      addNoteToNote.childNotes.push(note);
+    }
+    return note;
     
-    /*let note2 = new Note(this, note);
-    note2.initialize();*/
+  }
+  
+  //returns a note from the bar, index starting at 1 not 0
+  note(noteIndex){
+    let note = this.notes[noteIndex - 1];
     
+    if (note === undefined) {
+      let instrument = this.instrument.id;
+      let bar = this.bar.id;
+      throw "unable to find the note of [index: " + noteIndex + "] in the [bar: " + bar + "] in [instrument: " + instrument + "]"
+    }
+    else {
+      return note;
+    }
   }
   
   printBar(){
@@ -69,7 +84,7 @@ class Bar {
 
     this.createLines(newBar); //adds lines to it
     
-    if (this.id === 0) {
+    if (this.id === 0) { //only gets run on the first bar that is added by default, sets up the clef, time sig and key sig. Should probably break this into a seperate function
       this.addClef(newBar);
       this.changeKeySignature("sharps", 0);
       this.changeTimeSignature(4, 4); //default to a 4/4 time signature because i'm a pleb
@@ -209,6 +224,18 @@ class Bar {
     }
     
     this.timeSignature = new TimeSignature(this, top, bottom);
+  }
+  
+  removeTimeSignature(){
+    if (this.timeSignature === undefined) {
+      let instrument = this.instrument.id;
+      let bar = this.id;
+      throw "the time signature cannot be removed from [instrument: " + instrument + ", bar: " + bar + "] as one does not currently exist."
+    }
+    else {
+      this.timeSignature.removeOldTimeSignature();
+      this.timeSignature = undefined;
+    }
   }
   
 }
