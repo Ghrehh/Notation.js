@@ -92,6 +92,15 @@ class Bar {
 
   }
   
+  setBeams(){
+    for (let i = 0; i < this.notes.length; i++){
+      let note = this.notes[i];
+      
+      note.defaultBeam(); //should return all beams to their defaults and set the note.noteGrouping to false
+      note.setBeam(); //should look at neighbouring notes and set the beams appropriately
+    }
+  }
+  
   
   private
   
@@ -133,6 +142,7 @@ class Bar {
             "border-width": "0px " + this.widthOfBarLines  + "px", //the "width the bar linse will be"
             "vertical-align": "top",
             "min-width": minWidth + "px",
+            "white-space": "nowrap",
           }
   }
   

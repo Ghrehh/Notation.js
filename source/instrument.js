@@ -22,7 +22,7 @@ class Instrument {
     return this.bars[this.bars.length - 1];
   }
   
-  //the method that is actually called to add the bar
+  //the method that is actually called to add the b
   newBar(){
     var bar = new Bar(this, this.currentNumberOfBars());
     this.bars.push(bar);

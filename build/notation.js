@@ -108,6 +108,15 @@ var Bar = (function () {
     }
   };
 
+  Bar.prototype.setBeams = function setBeams() {
+    for (var i = 0; i < this.notes.length; i++) {
+      var note = this.notes[i];
+
+      note.defaultBeam(); //should return all beams to their defaults and set the note.noteGrouping to false
+      note.setBeam(); //should look at neighbouring notes and set the beams appropriately
+    }
+  };
+
   //chcecks if a bar container already exists, so multiples do not get added
 
   Bar.prototype.checkIfBarContainerExists = function checkIfBarContainerExists() {
@@ -145,7 +154,8 @@ var Bar = (function () {
       "border": "0px solid black",
       "border-width": "0px " + this.widthOfBarLines + "px", //the "width the bar linse will be"
       "vertical-align": "top",
-      "min-width": minWidth + "px"
+      "min-width": minWidth + "px",
+      "white-space": "nowrap"
     };
   };
 
@@ -280,7 +290,7 @@ var Instrument = (function () {
     return this.bars[this.bars.length - 1];
   };
 
-  //the method that is actually called to add the bar
+  //the method that is actually called to add the b
 
   Instrument.prototype.newBar = function newBar() {
     var bar = new _bar2['default'](this, this.currentNumberOfBars());
@@ -781,6 +791,7 @@ var Notation = (function () {
       throw "You did not initiate Notation with a container";
     }
     this.container = container; //include the class or id of an element you wish to build the Notation in.
+    this.container2 = ".bars-container";
     this.instruments = [];
 
     this.initialize();
@@ -922,8 +933,11 @@ var Note = (function () {
     _classCallCheck(this, Note);
 
     this.bar = bar;
+
     this.parentNote = parentNote;
-    this.childNotes = [];
+    this.childNotes = []; //notes that inhabit the same index as this note to make a chord
+    this.partOfNoteGrouping = false; // wether this note has been beamed together with other notes
+
     this.barReference = this.bar.reference;
     this.containerClassName = "note-container";
     this.className = "note";
@@ -952,7 +966,7 @@ var Note = (function () {
 
     this.noteParameters = this.getNoteParameters(this.pitch);
     if (this.noteParameters === undefined) {
-      throw "note/octave" + this.pitch + "not recognised in note.getNoteParameters()";
+      throw "note/octave '" + this.pitch + "' not recognised in note.getNoteParameters()";
     }
   }
 
@@ -1005,6 +1019,8 @@ var Note = (function () {
       this.setNoteStemCSS();
     }
   };
+
+  Note.prototype.setBeam = function setBeam() {};
 
   Note.prototype.printNoteContainer = function printNoteContainer() {
     var noteContainerHTML = '<div class="' + this.containerClassName + '" id="' + this.noteContainerID + '"></div>';
@@ -1125,8 +1141,7 @@ var Note = (function () {
   };
 
   Note.prototype.setNoteHeadCSS = function setNoteHeadCSS() {
-    $(this.noteHeadReference).css(this.getNoteHeadCSS()); //set the values put on all note heads
-    //$(this.noteHeadReference).css(this.getNoteDurationParameters(this.duration)); //then the ones that are only put on an individual note duration
+    $(this.noteHeadReference).css(this.getNoteHeadCSS());
   };
 
   Note.prototype.setLedgerLineContainerCSS = function setLedgerLineContainerCSS() {
@@ -1234,6 +1249,7 @@ var Note = (function () {
       "transform": "rotate(15deg)",
       "height": "0px",
       "width": "0px"
+
     };
   };
 
@@ -1324,7 +1340,7 @@ var Note = (function () {
       "E5": { topOffset: 0.0, stemDirection: "down" },
       "D5": { topOffset: 0.5, stemDirection: "down" },
       "C5": { topOffset: 1.0, stemDirection: "down" },
-      "B4": { topOffset: 1.5, stemDirection: "up" },
+      "B4": { topOffset: 1.5, stemDirection: "down" },
       "A4": { topOffset: 2.0, stemDirection: "up" },
       "G4": { topOffset: 2.5, stemDirection: "up" },
       "F4": { topOffset: 3.0, stemDirection: "up" },

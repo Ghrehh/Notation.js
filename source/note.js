@@ -1,8 +1,12 @@
 class Note {
   constructor(bar, pitch, duration, parentNote){
     this.bar = bar;
+    
     this.parentNote = parentNote;
-    this.childNotes = [];
+    this.childNotes = []; //notes that inhabit the same index as this note to make a chord
+    this.partOfNoteGrouping = false; // wether this note has been beamed together with other notes
+    
+    
     this.barReference = this.bar.reference;
     this.containerClassName = "note-container";
     this.className = "note";
@@ -32,10 +36,9 @@ class Note {
     
     this.noteParameters = this.getNoteParameters(this.pitch);
     if (this.noteParameters === undefined) {
-      throw "note/octave" + this.pitch + "not recognised in note.getNoteParameters()"
+      throw "note/octave '" + this.pitch + "' not recognised in note.getNoteParameters()"
     }
-    
-  
+
   }
   
   initialize(){
@@ -88,6 +91,10 @@ class Note {
       this.setNoteStemCSS();
     }
     
+    
+  }
+  
+  setBeam(){
     
   }
   
@@ -220,8 +227,7 @@ class Note {
   }
   
   setNoteHeadCSS(){
-    $(this.noteHeadReference).css(this.getNoteHeadCSS()); //set the values put on all note heads
-    //$(this.noteHeadReference).css(this.getNoteDurationParameters(this.duration)); //then the ones that are only put on an individual note duration
+    $(this.noteHeadReference).css(this.getNoteHeadCSS()); 
   }
   
   
@@ -294,6 +300,7 @@ class Note {
             "display": "block",
             "border-bottom": "0px solid red",
             "box-sizing": "border-box",
+            
                   
           }
   } //returns css attributes for note
@@ -331,6 +338,7 @@ class Note {
       "transform": "rotate(15deg)",
       "height": "0px",
       "width":"0px",
+      
     }
   }
   
@@ -427,7 +435,7 @@ class Note {
                           "E5": {topOffset: 0.0, stemDirection: "down"},
                           "D5": {topOffset: 0.5, stemDirection: "down"},
                           "C5": {topOffset: 1.0, stemDirection: "down"},
-                          "B4": {topOffset: 1.5, stemDirection: "up"},
+                          "B4": {topOffset: 1.5, stemDirection: "down"},
                           "A4": {topOffset: 2.0, stemDirection: "up"},
                           "G4": {topOffset: 2.5, stemDirection: "up"},
                           "F4": {topOffset: 3.0, stemDirection: "up"},

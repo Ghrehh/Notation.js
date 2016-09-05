@@ -17,6 +17,7 @@ class Notation {
     
     if (container == undefined) { throw "You did not initiate Notation with a container" }
     this.container = container; //include the class or id of an element you wish to build the Notation in.
+    this.container2 = ".bars-container";
     this.instruments = [];
     
     this.initialize();
