@@ -61,7 +61,7 @@ class Bar {
   }
   
   printBar(){
-    let currentBarContainers = $(this.notation.container + " > ." + this.containerClassName) //all bars
+    let currentBarContainers = $("." + this.notation.barsContainer + " > ." + this.containerClassName) //all bars
     let targetBarContainer = currentBarContainers.eq(this.id); //bar you will be appending to
     
     targetBarContainer.append(this.barHTML); //append the bar to the bar container
@@ -107,7 +107,7 @@ class Bar {
   //chcecks if a bar container already exists, so multiples do not get added
   checkIfBarContainerExists(){
     var barFound = false;
-    var currentBars = $(this.notation.container + " > ." + this.containerClassName)
+    var currentBars = $("." + this.notation.barsContainer + " > ." + this.containerClassName)
     
     for (let i = 0; i < currentBars.length; i++) {
       if (currentBars[i].id == this.id) {
@@ -124,7 +124,7 @@ class Bar {
   
   addBarContainer(){
     //this uses the id of the current bar, so should append the bar container correctly
-    $(this.notation.container).append(this.barContainerHTML);
+    $("." + this.notation.barsContainer).append(this.barContainerHTML);
     $("." + this.containerClassName).css(this.getBarContainerCSS()); //probably quicker just to set all the bars css than to loop through them all and find the right one?
   }
   

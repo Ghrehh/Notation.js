@@ -48,7 +48,21 @@ class Instrument {
   
   //loops through each container, like name container and bar container, finds the instruments id and deletes all instances of it
   removeFromPage() {
-    let containerChildren =  $(this.notation.container).children(); //gets all the bar and name containers
+    let containerChildren =  $("." + this.notation.barsContainer).children(); //gets all the bar and name containers
+    
+    for (let i = 0; i < containerChildren.length; i++) { //loops through the name and bar containers
+      for (let i2 = 0; i2 < containerChildren[i].childNodes.length; i2++) { //containerchildren[i] or whatever simply returns the raw html, not an object for some reason.
+        var element = containerChildren[i].childNodes[i2];
+        
+        if (this.id == element.id) { //double equals sign because the element.id is a string, saves a little bit of code
+          console.log("match")
+          element.remove();
+        }
+        
+      }
+    }
+    
+    containerChildren =  $(this.notation.container).children(); //gets all the bar and name containers
     
     for (let i = 0; i < containerChildren.length; i++) { //loops through the name and bar containers
       for (let i2 = 0; i2 < containerChildren[i].childNodes.length; i2++) { //containerchildren[i] or whatever simply returns the raw html, not an object for some reason.

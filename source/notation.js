@@ -2,7 +2,6 @@ import Instrument from './instrument';
 
 class Notation {
   constructor(container) {
-    this.instrumentNameContainerHTML = '<div class="instrument-name-container"></div>';
     
     this.trebleClefPath = "./media/clef.png";
     this.bassClefPath = "./media/bass.png";
@@ -17,7 +16,9 @@ class Notation {
     
     if (container == undefined) { throw "You did not initiate Notation with a container" }
     this.container = container; //include the class or id of an element you wish to build the Notation in.
-    this.container2 = ".bars-container";
+    
+    this.barsContainer = "bars-container";
+    this.instrumentNameContainer = "instrument-name-container"
     this.instruments = [];
     
     this.initialize();
@@ -102,6 +103,22 @@ class Notation {
     this.removeEmptyBarContainers(); //runs the remove empty bar containers functions to REMOVE EMPTY BARS
   }
   
+  setBarsContainerCSS(){
+    let width = $(this.container).width() - $("." + this.instrumentNameContainer).width();
+    let css = {"display": "inline-block",
+               "vertical-align": "top",
+               "width": width + "px",
+               "padding": 0,
+               "margin": 0,
+              }
+            
+    $("." + this.barsContainer).css(css);
+  }
+  
+  setBarClefs(){
+    $(this.container).find(".clef").remove();
+  }
+  
   
   private
   
@@ -109,6 +126,7 @@ class Notation {
   initialize(){ 
     this.setUpContainer();
     this.addNamesContainer();
+    this.addBarsContainer();
   }
   
   //empties the container when Notation is initiated
@@ -118,10 +136,19 @@ class Notation {
   
   //Adds the container that will contain the names of the instruments to the far left of the container, the number of instrument elements in this container is used to set the ids of instrument elements
   addNamesContainer() {
-    $(this.container).append(this.instrumentNameContainerHTML);
+    let HTML = '<div class="instrument-name-container"></div>';
+    
+    $(this.container).append(HTML);
     $(".instrument-name-container").css(this.getInstrumentNameContainerCSS());
   }
   
+  addBarsContainer() {
+    let HTML = '<div class="' + this.barsContainer + '"></div>';
+    
+    $(this.container).append(HTML);
+    this.setBarsContainerCSS();
+        
+  }
   getInstrumentNameContainerCSS(){
     return {"display": "inline-block",
             "vertical-align": "top",
@@ -130,6 +157,8 @@ class Notation {
         
             }
   }
+  
+
   
   //removes empty bar containers after deleting instruments or bars
   removeEmptyBarContainers() {

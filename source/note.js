@@ -391,7 +391,7 @@ class Note {
   getNoteStemCSS(){
     let noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
     let stemWidth = 1;
-    let stemHeight = noteHeadHeight * 2.5;
+    let stemHeight = noteHeadHeight * 3.0;
     let left;
     let bottom;
     

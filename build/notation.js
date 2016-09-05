@@ -78,7 +78,7 @@ var Bar = (function () {
   };
 
   Bar.prototype.printBar = function printBar() {
-    var currentBarContainers = $(this.notation.container + " > ." + this.containerClassName); //all bars
+    var currentBarContainers = $("." + this.notation.barsContainer + " > ." + this.containerClassName); //all bars
     var targetBarContainer = currentBarContainers.eq(this.id); //bar you will be appending to
 
     targetBarContainer.append(this.barHTML); //append the bar to the bar container
@@ -121,7 +121,7 @@ var Bar = (function () {
 
   Bar.prototype.checkIfBarContainerExists = function checkIfBarContainerExists() {
     var barFound = false;
-    var currentBars = $(this.notation.container + " > ." + this.containerClassName);
+    var currentBars = $("." + this.notation.barsContainer + " > ." + this.containerClassName);
 
     for (var i = 0; i < currentBars.length; i++) {
       if (currentBars[i].id == this.id) {
@@ -137,7 +137,7 @@ var Bar = (function () {
 
   Bar.prototype.addBarContainer = function addBarContainer() {
     //this uses the id of the current bar, so should append the bar container correctly
-    $(this.notation.container).append(this.barContainerHTML);
+    $("." + this.notation.barsContainer).append(this.barContainerHTML);
     $("." + this.containerClassName).css(this.getBarContainerCSS()); //probably quicker just to set all the bars css than to loop through them all and find the right one?
   };
 
@@ -316,7 +316,23 @@ var Instrument = (function () {
   //loops through each container, like name container and bar container, finds the instruments id and deletes all instances of it
 
   Instrument.prototype.removeFromPage = function removeFromPage() {
-    var containerChildren = $(this.notation.container).children(); //gets all the bar and name containers
+    var containerChildren = $("." + this.notation.barsContainer).children(); //gets all the bar and name containers
+
+    for (var i = 0; i < containerChildren.length; i++) {
+      //loops through the name and bar containers
+      for (var i2 = 0; i2 < containerChildren[i].childNodes.length; i2++) {
+        //containerchildren[i] or whatever simply returns the raw html, not an object for some reason.
+        var element = containerChildren[i].childNodes[i2];
+
+        if (this.id == element.id) {
+          //double equals sign because the element.id is a string, saves a little bit of code
+          console.log("match");
+          element.remove();
+        }
+      }
+    }
+
+    containerChildren = $(this.notation.container).children(); //gets all the bar and name containers
 
     for (var i = 0; i < containerChildren.length; i++) {
       //loops through the name and bar containers
@@ -759,13 +775,13 @@ exports["default"] = KeySignature;
 module.exports = exports["default"];
 
 },{}],4:[function(require,module,exports){
-'use strict';
+"use strict";
 
 exports.__esModule = true;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var _instrument = require('./instrument');
 
@@ -774,8 +790,6 @@ var _instrument2 = _interopRequireDefault(_instrument);
 var Notation = (function () {
   function Notation(container) {
     _classCallCheck(this, Notation);
-
-    this.instrumentNameContainerHTML = '<div class="instrument-name-container"></div>';
 
     this.trebleClefPath = "./media/clef.png";
     this.bassClefPath = "./media/bass.png";
@@ -791,7 +805,9 @@ var Notation = (function () {
       throw "You did not initiate Notation with a container";
     }
     this.container = container; //include the class or id of an element you wish to build the Notation in.
-    this.container2 = ".bars-container";
+
+    this.barsContainer = "bars-container";
+    this.instrumentNameContainer = "instrument-name-container";
     this.instruments = [];
 
     this.initialize();
@@ -810,7 +826,7 @@ var Notation = (function () {
 
   Notation.prototype.addInstrument = function addInstrument(name, clef) {
 
-    var instrument = new _instrument2['default'](this, name, clef); //create new instrument
+    var instrument = new _instrument2["default"](this, name, clef); //create new instrument
 
     if (this.instruments.length != 0) {
       //checks if another instrument exists
@@ -871,11 +887,28 @@ var Notation = (function () {
     this.removeEmptyBarContainers(); //runs the remove empty bar containers functions to REMOVE EMPTY BARS
   };
 
+  Notation.prototype.setBarsContainerCSS = function setBarsContainerCSS() {
+    var width = $(this.container).width() - $("." + this.instrumentNameContainer).width();
+    var css = { "display": "inline-block",
+      "vertical-align": "top",
+      "width": width + "px",
+      "padding": 0,
+      "margin": 0
+    };
+
+    $("." + this.barsContainer).css(css);
+  };
+
+  Notation.prototype.setBarClefs = function setBarClefs() {
+    $(this.container).find(".clef").remove();
+  };
+
   //stuff that is run when the object is created
 
   Notation.prototype.initialize = function initialize() {
     this.setUpContainer();
     this.addNamesContainer();
+    this.addBarsContainer();
   };
 
   //empties the container when Notation is initiated
@@ -887,8 +920,17 @@ var Notation = (function () {
   //Adds the container that will contain the names of the instruments to the far left of the container, the number of instrument elements in this container is used to set the ids of instrument elements
 
   Notation.prototype.addNamesContainer = function addNamesContainer() {
-    $(this.container).append(this.instrumentNameContainerHTML);
+    var HTML = '<div class="instrument-name-container"></div>';
+
+    $(this.container).append(HTML);
     $(".instrument-name-container").css(this.getInstrumentNameContainerCSS());
+  };
+
+  Notation.prototype.addBarsContainer = function addBarsContainer() {
+    var HTML = '<div class="' + this.barsContainer + '"></div>';
+
+    $(this.container).append(HTML);
+    this.setBarsContainerCSS();
   };
 
   Notation.prototype.getInstrumentNameContainerCSS = function getInstrumentNameContainerCSS() {
@@ -918,8 +960,8 @@ var Notation = (function () {
 })();
 
 window.Notation = Notation; //makes the module global
-exports['default'] = Notation;
-module.exports = exports['default'];
+exports["default"] = Notation;
+module.exports = exports["default"];
 
 },{"./instrument":2}],5:[function(require,module,exports){
 "use strict";
@@ -1300,7 +1342,7 @@ var Note = (function () {
   Note.prototype.getNoteStemCSS = function getNoteStemCSS() {
     var noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
     var stemWidth = 1;
-    var stemHeight = noteHeadHeight * 2.5;
+    var stemHeight = noteHeadHeight * 3.0;
     var left = undefined;
     var bottom = undefined;
 
