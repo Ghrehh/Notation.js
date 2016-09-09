@@ -2,9 +2,9 @@ $(document).ready(function(){
   var n = new Notation(".container");
   
   var i =  n.addInstrument("Guitar 1", "bass");
-  var i3 =  n.addInstrument("Guitar 1");
-  var i2 =  n.addInstrument("");
-  var i4 =  n.addInstrument("Guitar 1");
+  var i3 =  n.addInstrument("Guitar 2");
+  var i2 =  n.addInstrument("Poland");
+  var i4 =  n.addInstrument("Camel");
   
   
   n.addBar();
@@ -91,7 +91,7 @@ $(document).ready(function(){
   i4.bar(1).addNote("B3", "thirty-second-note")
   i4.bar(1).addNote("B3", "thirty-second-note")
   i4.bar(1).addNote("B3", "thirty-second-note")
-
+  
 
   
   let bar = i.addBar();
@@ -118,6 +118,23 @@ $(document).ready(function(){
   var n2 =  new Notation(".container2");
   
   n2.addInstrument("shit");
+  n2.addInstrument("shi2t");
+  
+  $(window).resize(function(){
+    n2.setBarClefs();
+    n2.setBarsContainerCSS();
+    
+    n.setBarClefs();
+    n.setBarsContainerCSS();
+  })
+  
+  n2.setBarClefs();
+  n2.setBarsContainerCSS();
+  
+  n.setBarClefs();
+  n.setBarsContainerCSS();
+  
+  n2.addBar()
 
 })
 

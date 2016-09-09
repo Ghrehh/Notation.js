@@ -61,7 +61,7 @@ class Bar {
   }
   
   printBar(){
-    let currentBarContainers = $("." + this.notation.barsContainer + " > ." + this.containerClassName) //all bars
+    let currentBarContainers = $(this.notation.container + " > ." + this.notation.barsContainer + " > ." + this.containerClassName) //all bars
     let targetBarContainer = currentBarContainers.eq(this.id); //bar you will be appending to
     
     targetBarContainer.append(this.barHTML); //append the bar to the bar container
@@ -85,11 +85,90 @@ class Bar {
     this.createLines(newBar); //adds lines to it
     
     if (this.id === 0) { //only gets run on the first bar that is added by default, sets up the clef, time sig and key sig. Should probably break this into a seperate function
-      this.addClef(newBar);
+      this.addClef();
       this.changeKeySignature("sharps", 0);
       this.changeTimeSignature(4, 4); //default to a 4/4 time signature because i'm a pleb
     }
 
+  }
+  
+  addClef() {
+    
+    if ($(this.reference) === undefined) {
+      throw "cannot add clef, bar reference is undefined (instrument: " + this.instrument.id + ", bar: " + this.id + ")";
+    }
+    let targetBar = $(this.reference);
+    let clefHTML;
+    let clefCSS;
+    
+    if (this.instrument.clef === "bass") {
+      clefHTML = '<img src="' + this.notation.bassClefPath + '" class="clef">';
+      
+      clefCSS = {
+        "height": "80%",
+        "display": "inline-block",
+        "padding": "2px 5px 2px 10px",
+        "box-sizing": "border-box",
+        "vertical-align":"top",
+        "position": "relative", //so it sits atop the lines
+      } 
+    }
+    else {
+      clefHTML = '<img src="' + this.notation.trebleClefPath + '" class="clef">';
+      let bottomOffset = $(this.reference).height() / 7;
+      
+      clefCSS = {
+        "height": "150%",
+        "display": "inline-block",
+        "padding": "2px 5px 2px 10px",
+        "box-sizing": "border-box",
+        "bottom": bottomOffset,
+        "position": "relative",
+      } 
+    
+    }
+    
+    
+
+    targetBar.children(".line-container").last().after(clefHTML); //append it after the last line-container otherwise
+    targetBar.children(".clef").css(clefCSS);
+    
+  }
+  
+  setConjoiningLine(){
+    let html = '<div class="conjoining-line-container">' +
+                  '<div class="conjoining-line">' +
+                  '</div>' +
+                '</div>'
+    let marginBottom = $(this.reference).css("margin-bottom");
+    let height = parseInt($(this.reference).height() * 2) + parseInt(marginBottom.substr(0, marginBottom.length - 2)); //assumes the margin bottom is XXXpx and cuts off the px
+    
+    let lineWidth = 2; //should set this dynamically probably
+                
+    let conjoiningLineContainerCSS = {"width": 0,
+                                      "height": 0,
+                                   
+                                     }
+                                     
+    let conjoiningLineCSS = {"width": lineWidth + "px",
+                             "height": height + "px",
+                             "background-color":"black",
+                             "position":"relative",
+                             "right": lineWidth + "px"
+                                   
+                            }
+    
+    
+    $(this.reference).prepend(html);
+    
+    $(this.reference).children(".conjoining-line-container").css(conjoiningLineContainerCSS);
+    $(this.reference).find(".conjoining-line").css(conjoiningLineCSS);
+    
+    
+  }
+  
+  removeConjoiningLine(){
+    $(this.reference).children(".conjoining-line-container").remove();
   }
   
   setBeams(){
@@ -102,12 +181,13 @@ class Bar {
   }
   
   
+  
   private
   
   //chcecks if a bar container already exists, so multiples do not get added
   checkIfBarContainerExists(){
     var barFound = false;
-    var currentBars = $("." + this.notation.barsContainer + " > ." + this.containerClassName)
+    var currentBars = $(this.notation.container + " > ." + this.notation.barsContainer + " > ." + this.containerClassName)
     
     for (let i = 0; i < currentBars.length; i++) {
       if (currentBars[i].id == this.id) {
@@ -176,46 +256,6 @@ class Bar {
     }
     
     
-    
-  }
-  
-  addClef(bar) {
-    let targetBar = $(bar);
-    let clefHTML;
-    let clefCSS;
-    
-    if (this.instrument.clef === "bass") {
-      clefHTML = '<img src="' + this.notation.bassClefPath + '" class="clef">';
-      
-      clefCSS = {
-        "height": "80%",
-        "display": "inline-block",
-        "padding": "2px 5px 2px 10px",
-        "box-sizing": "border-box",
-        "vertical-align":"top",
-        "position": "relative", //so it sits atop the lines
-      } 
-    }
-    else {
-      clefHTML = '<img src="' + this.notation.trebleClefPath + '" class="clef">';
-      let bottomOffset = $(this.reference).height() / 7;
-      
-      clefCSS = {
-        "height": "150%",
-        "display": "inline-block",
-        "padding": "2px 5px 2px 10px",
-        "box-sizing": "border-box",
-        "bottom": bottomOffset,
-        "position": "relative",
-      } 
-    
-    }
-    
-    
-
-    
-    targetBar.append(clefHTML);
-    targetBar.children(".clef").css(clefCSS);
     
   }
   

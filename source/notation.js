@@ -115,10 +115,42 @@ class Notation {
     $("." + this.barsContainer).css(css);
   }
   
+  //loops through all the clefs, if ones vertical position is different than the last, then it is on a new line and a clef should be added
   setBarClefs(){
-    $(this.container).find(".clef").remove();
+    $(this.container).find(".clef").remove(); //removes all the clefs already on the page
+    $(this.container).find(".conjoining-line-container").remove()
+    
+    let barContainers = $(this.container + " > ." + this.barsContainer).children(); //all the bar containers
+    
+    for (let i = 0; i < barContainers.length; i++) {
+      let currentBarX = barContainers.eq(i).offset().top;
+      let previousBarX;
+      
+      if (i > 0) {
+        previousBarX = barContainers.eq(i - 1).offset().top;
+      }
+      
+     
+      
+      if (currentBarX > previousBarX || previousBarX === undefined) {
+        for (let i2 = 0; i2 < this.instruments.length; i2++) {
+          
+          let instrument = this.instruments[i2];
+          instrument.bar(i + 1).addClef(); //bars are 1 indexed, not 0;
+          
+          //applies the conjoining line to all bars but the last instrument
+          if(!(instrument.id === this.instruments[this.instruments.length - 1].id)){
+            instrument.bar(i + 1).setConjoiningLine();
+          }
+          
+        }
+      }
+      
+      
+    }
   }
   
+
   
   private
   

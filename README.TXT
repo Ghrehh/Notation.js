@@ -4,10 +4,11 @@ TODO
   -note durations
   -slurs
   -annotations
+  -triplets
   
   -tempo
   -titles
   
-  -breaking bars
+  -breaking bars DONE
   -beaming
   -clef note difference
