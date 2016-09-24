@@ -135,6 +135,9 @@ $(document).ready(function(){
   n.setBarsContainerCSS();
   
   n2.addBar()
+  
+  n.setTitle("Test Title")
+  n.setTempo("120 BPM")
 
 })
 

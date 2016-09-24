@@ -21,6 +21,9 @@ class Notation {
     this.instrumentNameContainer = "instrument-name-container"
     this.instruments = [];
     
+    this.title;
+    this.tempo;
+    
     this.initialize();
   }
   
@@ -150,6 +153,28 @@ class Notation {
     }
   }
   
+  setTitle(title){
+    this.title = title;
+    
+    if (this.title === undefined){
+      this.title = "";
+    }
+    
+    this.setTitleContainer();
+    
+  }
+  
+  setTempo(tempo){
+    this.tempo = tempo;
+    
+    if (this.tempo === undefined){
+      this.tempo = "";
+    }
+    
+    this.setTitleContainer();
+    
+  }
+  
 
   
   private
@@ -159,6 +184,42 @@ class Notation {
     this.setUpContainer();
     this.addNamesContainer();
     this.addBarsContainer();
+  }
+  
+  setTitleContainer(){
+    $(this.container).children(".title-container").remove(); //removes the old title container
+    
+    let html = '<div class="title-container">' +
+                  '<h1 class="title">' +
+                    this.title +
+                  '</h1>' +
+                  '<h4 class="tempo"><i>' +
+                    this.tempo +
+                  '</i></h4>' +
+               '</div>';
+               
+    $(this.container).prepend(html);
+    
+    let topPadding = 0;
+    let sidePadding = $(this.container).find(".instrument-name-container").width(); //should be in line with the instrument name container
+    
+    
+    let titleContainerCSS = {"padding": topPadding + "px " + sidePadding + "px 0px",
+                    
+                    }
+    
+    let titleCSS = {"text-align":"center",
+                    
+                    }
+                    
+    let tempoCSS = {"text-align":"left",
+                    "margin-bottom":"0px",
+                    }
+                    
+    $(this.container).find(".title-container").css(titleContainerCSS);
+    $(this.container).find(".title").css(titleCSS);
+    $(this.container).find(".tempo").css(tempoCSS);
+    
   }
   
   //empties the container when Notation is initiated
