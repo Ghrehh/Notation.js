@@ -40,8 +40,10 @@ class Bar {
       this.notes.push(note);
     }
     else {
+      
       addNoteToNote.childNotes.push(note);
     }
+    
     return note;
     
   }
@@ -135,34 +137,63 @@ class Bar {
     
   }
   
-  setConjoiningLine(){
+  addConjoiningLine(modifier){
+    /* modifiers
+      "bold" the bold, "thicker" first conjoining line on each new segment
+      "end" places a conjoining line at the end of the bar
+    */
+    
+    let className = "conjoining-line";
+    let left = 0;
+    let lineWidth = 1; //should set this dynamically probably
+    let width;
+    
+    if (modifier === "bold"){
+      width = lineWidth * 2;
+    }
+    else {
+      width = lineWidth ;
+    }
+    
+    if (modifier === "end") {
+      className = "conjoining-line after";
+      let barWidth = $(this.reference).width();
+      left = barWidth;
+    }
+
     let html = '<div class="conjoining-line-container">' +
-                  '<div class="conjoining-line">' +
+                  '<div class="' + className + '">' +
                   '</div>' +
                 '</div>'
+                
     let marginBottom = $(this.reference).css("margin-bottom");
     let height = parseInt($(this.reference).height() * 2) + parseInt(marginBottom.substr(0, marginBottom.length - 2)); //assumes the margin bottom is XXXpx and cuts off the px
-    
-    let lineWidth = 2; //should set this dynamically probably
-                
+
     let conjoiningLineContainerCSS = {"width": 0,
                                       "height": 0,
                                    
-                                     }
-                                     
-    let conjoiningLineCSS = {"width": lineWidth + "px",
+                                   }
+                    
+    let conjoiningLineCSS = {"width": width + "px",
                              "height": height + "px",
                              "background-color":"black",
                              "position":"relative",
-                             "right": lineWidth + "px"
+                             "right": lineWidth + "px",
                                    
                             }
+                            
+    //adds left padding to put the conjoining line on the end of the bar
+    let conjoiningLineCSSAfter = {
+                                  "left": left + "px",
+                                   
+                                  }
     
     
     $(this.reference).prepend(html);
     
     $(this.reference).children(".conjoining-line-container").css(conjoiningLineContainerCSS);
     $(this.reference).find(".conjoining-line").css(conjoiningLineCSS);
+    $(this.reference).find(".after").css(conjoiningLineCSSAfter);
     
     
   }
@@ -204,8 +235,54 @@ class Bar {
   
   addBarContainer(){
     //this uses the id of the current bar, so should append the bar container correctly
-    $("." + this.notation.barsContainer).append(this.barContainerHTML);
-    $("." + this.containerClassName).css(this.getBarContainerCSS()); //probably quicker just to set all the bars css than to loop through them all and find the right one?
+    $(this.notation.container + " ." + this.notation.barsContainer).append(this.barContainerHTML);
+    $(this.notation.container + " ." + this.containerClassName).css(this.getBarContainerCSS()); //probably quicker just to set all the bars css than to loop through them all and find the right one?
+    this.addBarNumber();
+  }
+  
+  addBarNumber(){
+    
+    //find the right bar container
+    let barContainers = $(this.notation.container).find("." + this.containerClassName);
+    
+    for (let i = 0; i < barContainers.length; i ++){
+      let barContainer = barContainers[i];
+      
+      if (barContainer.id == this.id) { //two equals because it's string to integer, maybe not safe
+        this.reference = barContainer;
+      }
+    }
+    
+    //declare and append html
+    let html = '<div class="number-container">' +
+                  '<p class="number">' + (parseInt(this.id) + 1) + '</p>' +
+                '</div>'
+                
+    $(this.reference).append(html);
+    
+    
+    //declare and apply css
+    let containerCSS = {"height": "0px",
+                        "width": "0px",
+                       }
+    
+    let fontSize = this.notation.barHeight / 3;
+    let leftPadding = fontSize / 2; //move it over a little
+    let topPadding = this.notation.marginAboveBar - (fontSize * 1.4); //some bullshit that kind of looks right
+    
+    let CSS = {"position":"relative",
+               "top": topPadding + "px",
+               "left": leftPadding + "px",
+               "margin": "0",
+               "padding": "0",
+               "color": "#515197",
+               "font-size": fontSize + "px",
+              }
+    
+    $(this.reference).find(".number-container").css(containerCSS);
+    $(this.reference).find(".number").css(CSS);
+    
+    
   }
   
   removeBarsFromContainer(target){

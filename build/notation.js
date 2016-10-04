@@ -58,8 +58,10 @@ var Bar = (function () {
       //only add it to the bar.notes[] if it's the first note added of a chord
       this.notes.push(note);
     } else {
+
       addNoteToNote.childNotes.push(note);
     }
+
     return note;
   };
 
@@ -146,19 +148,40 @@ var Bar = (function () {
     targetBar.children(".clef").css(clefCSS);
   };
 
-  Bar.prototype.setConjoiningLine = function setConjoiningLine() {
-    var html = '<div class="conjoining-line-container">' + '<div class="conjoining-line">' + '</div>' + '</div>';
+  Bar.prototype.addConjoiningLine = function addConjoiningLine(modifier) {
+    /* modifiers
+      "bold" the bold, "thicker" first conjoining line on each new segment
+      "end" places a conjoining line at the end of the bar
+    */
+
+    var className = "conjoining-line";
+    var left = 0;
+    var lineWidth = 1; //should set this dynamically probably
+    var width = undefined;
+
+    if (modifier === "bold") {
+      width = lineWidth * 2;
+    } else {
+      width = lineWidth;
+    }
+
+    if (modifier === "end") {
+      className = "conjoining-line after";
+      var barWidth = $(this.reference).width();
+      left = barWidth;
+    }
+
+    var html = '<div class="conjoining-line-container">' + '<div class="' + className + '">' + '</div>' + '</div>';
+
     var marginBottom = $(this.reference).css("margin-bottom");
     var height = parseInt($(this.reference).height() * 2) + parseInt(marginBottom.substr(0, marginBottom.length - 2)); //assumes the margin bottom is XXXpx and cuts off the px
-
-    var lineWidth = 2; //should set this dynamically probably
 
     var conjoiningLineContainerCSS = { "width": 0,
       "height": 0
 
     };
 
-    var conjoiningLineCSS = { "width": lineWidth + "px",
+    var conjoiningLineCSS = { "width": width + "px",
       "height": height + "px",
       "background-color": "black",
       "position": "relative",
@@ -166,10 +189,17 @@ var Bar = (function () {
 
     };
 
+    //adds left padding to put the conjoining line on the end of the bar
+    var conjoiningLineCSSAfter = {
+      "left": left + "px"
+
+    };
+
     $(this.reference).prepend(html);
 
     $(this.reference).children(".conjoining-line-container").css(conjoiningLineContainerCSS);
     $(this.reference).find(".conjoining-line").css(conjoiningLineCSS);
+    $(this.reference).find(".after").css(conjoiningLineCSSAfter);
   };
 
   Bar.prototype.removeConjoiningLine = function removeConjoiningLine() {
@@ -205,8 +235,50 @@ var Bar = (function () {
 
   Bar.prototype.addBarContainer = function addBarContainer() {
     //this uses the id of the current bar, so should append the bar container correctly
-    $("." + this.notation.barsContainer).append(this.barContainerHTML);
-    $("." + this.containerClassName).css(this.getBarContainerCSS()); //probably quicker just to set all the bars css than to loop through them all and find the right one?
+    $(this.notation.container + " ." + this.notation.barsContainer).append(this.barContainerHTML);
+    $(this.notation.container + " ." + this.containerClassName).css(this.getBarContainerCSS()); //probably quicker just to set all the bars css than to loop through them all and find the right one?
+    this.addBarNumber();
+  };
+
+  Bar.prototype.addBarNumber = function addBarNumber() {
+
+    //find the right bar container
+    var barContainers = $(this.notation.container).find("." + this.containerClassName);
+
+    for (var i = 0; i < barContainers.length; i++) {
+      var barContainer = barContainers[i];
+
+      if (barContainer.id == this.id) {
+        //two equals because it's string to integer, maybe not safe
+        this.reference = barContainer;
+      }
+    }
+
+    //declare and append html
+    var html = '<div class="number-container">' + '<p class="number">' + (parseInt(this.id) + 1) + '</p>' + '</div>';
+
+    $(this.reference).append(html);
+
+    //declare and apply css
+    var containerCSS = { "height": "0px",
+      "width": "0px"
+    };
+
+    var fontSize = this.notation.barHeight / 3;
+    var leftPadding = fontSize / 2; //move it over a little
+    var topPadding = this.notation.marginAboveBar - fontSize * 1.4; //some bullshit that kind of looks right
+
+    var CSS = { "position": "relative",
+      "top": topPadding + "px",
+      "left": leftPadding + "px",
+      "margin": "0",
+      "padding": "0",
+      "color": "#515197",
+      "font-size": fontSize + "px"
+    };
+
+    $(this.reference).find(".number-container").css(containerCSS);
+    $(this.reference).find(".number").css(CSS);
   };
 
   Bar.prototype.removeBarsFromContainer = function removeBarsFromContainer(target) {
@@ -925,7 +997,7 @@ var Notation = (function () {
   };
 
   Notation.prototype.setBarsContainerCSS = function setBarsContainerCSS() {
-    var width = $(this.container).width() - $("." + this.instrumentNameContainer).width();
+    var width = $(this.container).width() - $("." + this.instrumentNameContainer).width() - this.barHeight * 2; //the clef not loading initially throws off the size of the container, and it's roughly the width of the bar height
     var css = { "display": "inline-block",
       "vertical-align": "top",
       "width": width + "px",
@@ -936,11 +1008,11 @@ var Notation = (function () {
     $("." + this.barsContainer).css(css);
   };
 
-  //loops through all the clefs, if ones vertical position is different than the last, then it is on a new line and a clef should be added
+  //loops through bars and searches for breakpoints, adds conjoining lines/clefs etc
 
-  Notation.prototype.setBarClefs = function setBarClefs() {
+  Notation.prototype.resize = function resize() {
     $(this.container).find(".clef").remove(); //removes all the clefs already on the page
-    $(this.container).find(".conjoining-line-container").remove();
+    $(this.container).find(".conjoining-line-container").remove(); //removes all conjoining lines
 
     var barContainers = $(this.container + " > ." + this.barsContainer).children(); //all the bar containers
 
@@ -948,22 +1020,57 @@ var Notation = (function () {
       var currentBarX = barContainers.eq(i).offset().top;
       var previousBarX = undefined;
 
+      //sets previous bar if the current bar is not the first
       if (i > 0) {
         previousBarX = barContainers.eq(i - 1).offset().top;
       }
 
+      //adds the thicker line to the first bar of each line of bars
       if (currentBarX > previousBarX || previousBarX === undefined) {
         for (var i2 = 0; i2 < this.instruments.length; i2++) {
 
           var instrument = this.instruments[i2];
+          var bar = instrument.bar(i + 1);
           instrument.bar(i + 1).addClef(); //bars are 1 indexed, not 0;
 
-          //applies the conjoining line to all bars but the last instrument
+          //applies the thicker conjoining line to all bars but the last instrument
           if (!(instrument.id === this.instruments[this.instruments.length - 1].id)) {
-            instrument.bar(i + 1).setConjoiningLine();
+            instrument.bar(i + 1).addConjoiningLine("bold"); //the first line should be bold
+
+            //if it's not the very first bar, add the end of bar conjoining line to the previous bar
+            if (previousBarX !== undefined) {
+              instrument.bar(i).addConjoiningLine("end");
+
+              var lastBar = instrument.bar(instrument.bars.length); //bars are 1 indexed, not 0, so no need to subtract one
+
+              if (bar === lastBar) {
+                bar.addConjoiningLine("end");
+              }
+            }
           }
         }
       }
+      //adds the other, thinner lines to every other bar
+      else {
+          for (var i2 = 0; i2 < this.instruments.length; i2++) {
+
+            var instrument = this.instruments[i2];
+            var bar = instrument.bar(i + 1);
+
+            if (!(instrument.id === this.instruments[this.instruments.length - 1].id)) {
+              if (instrument.bar(i + 1) != undefined) {
+
+                instrument.bar(i + 1).addConjoiningLine();
+
+                var lastBar = instrument.bar(instrument.bars.length); //bars are 1 indexed, not 0, so no need to subtract one
+
+                if (bar === lastBar) {
+                  bar.addConjoiningLine("end");
+                }
+              }
+            }
+          }
+        }
     }
   };
 
@@ -1015,8 +1122,8 @@ var Notation = (function () {
 
     var tempoCSS = { "text-align": "left",
       "margin-bottom": "0px"
-
     };
+
     $(this.container).find(".title-container").css(titleContainerCSS);
     $(this.container).find(".title").css(titleCSS);
     $(this.container).find(".tempo").css(tempoCSS);

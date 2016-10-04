@@ -97,7 +97,7 @@ $(document).ready(function(){
   let bar = i.addBar();
   let note = bar.addNote("C5");
   
-  bar.addNote("E5", bar.note(1));
+  bar.addNote("E5", "half-note", bar.note(1));
   
   
   i3.bar(3).addNote("F4");
@@ -121,18 +121,23 @@ $(document).ready(function(){
   n2.addInstrument("shi2t");
   
   $(window).resize(function(){
-    n2.setBarClefs();
+    n2.resize();
     n2.setBarsContainerCSS();
     
-    n.setBarClefs();
+    n.resize();
     n.setBarsContainerCSS();
   })
   
-  n2.setBarClefs();
+  n2.resize();
   n2.setBarsContainerCSS();
   
-  n.setBarClefs();
+  
+  setTimeout(function(){
+      n.resize();
   n.setBarsContainerCSS();
+    
+  }, 1000);
+
   
   n2.addBar()
   

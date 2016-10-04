@@ -32,6 +32,7 @@ class Notation {
       let instrument = this.instruments[i];
       instrument.newBar()
     }
+
   }
   
   //creates a new instrument and pushes it to the instruments array, name is optional. 
@@ -107,7 +108,7 @@ class Notation {
   }
   
   setBarsContainerCSS(){
-    let width = $(this.container).width() - $("." + this.instrumentNameContainer).width();
+    let width = $(this.container).width() - $("." + this.instrumentNameContainer).width() - this.barHeight * 2; //the clef not loading initially throws off the size of the container, and it's roughly the width of the bar height
     let css = {"display": "inline-block",
                "vertical-align": "top",
                "width": width + "px",
@@ -118,10 +119,10 @@ class Notation {
     $("." + this.barsContainer).css(css);
   }
   
-  //loops through all the clefs, if ones vertical position is different than the last, then it is on a new line and a clef should be added
-  setBarClefs(){
+  //loops through bars and searches for breakpoints, adds conjoining lines/clefs etc
+  resize(){
     $(this.container).find(".clef").remove(); //removes all the clefs already on the page
-    $(this.container).find(".conjoining-line-container").remove()
+    $(this.container).find(".conjoining-line-container").remove() //removes all conjoining lines
     
     let barContainers = $(this.container + " > ." + this.barsContainer).children(); //all the bar containers
     
@@ -129,25 +130,63 @@ class Notation {
       let currentBarX = barContainers.eq(i).offset().top;
       let previousBarX;
       
+      //sets previous bar if the current bar is not the first
       if (i > 0) {
         previousBarX = barContainers.eq(i - 1).offset().top;
       }
       
      
-      
+      //adds the thicker line to the first bar of each line of bars
       if (currentBarX > previousBarX || previousBarX === undefined) {
         for (let i2 = 0; i2 < this.instruments.length; i2++) {
           
           let instrument = this.instruments[i2];
+          let bar = instrument.bar(i + 1);
           instrument.bar(i + 1).addClef(); //bars are 1 indexed, not 0;
           
-          //applies the conjoining line to all bars but the last instrument
+          //applies the thicker conjoining line to all bars but the last instrument
           if(!(instrument.id === this.instruments[this.instruments.length - 1].id)){
-            instrument.bar(i + 1).setConjoiningLine();
+            instrument.bar(i + 1).addConjoiningLine("bold"); //the first line should be bold
+            
+            //if it's not the very first bar, add the end of bar conjoining line to the previous bar
+            if(previousBarX !== undefined){
+              instrument.bar(i).addConjoiningLine("end");
+              
+              let lastBar = instrument.bar(instrument.bars.length) //bars are 1 indexed, not 0, so no need to subtract one
+              
+              if(bar === lastBar){
+                bar.addConjoiningLine("end");
+              }
+            }
           }
           
         }
       }
+      //adds the other, thinner lines to every other bar
+      else {
+        for (let i2 = 0; i2 < this.instruments.length; i2++) {
+          
+          let instrument = this.instruments[i2];
+          let bar = instrument.bar(i + 1);
+          
+          if(!(instrument.id === this.instruments[this.instruments.length - 1].id)){
+            if (instrument.bar(i + 1) != undefined){ 
+              
+              instrument.bar(i + 1).addConjoiningLine();
+              
+              let lastBar = instrument.bar(instrument.bars.length) //bars are 1 indexed, not 0, so no need to subtract one
+              
+              if(bar === lastBar){
+                bar.addConjoiningLine("end");
+              }
+            }
+          }
+          
+        }
+      }
+      
+      
+    
       
       
     }
