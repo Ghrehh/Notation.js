@@ -121,19 +121,19 @@ $(document).ready(function(){
   n2.addInstrument("shi2t");
   
   $(window).resize(function(){
-    n2.resize();
+    n2.rtwo();
     n2.setBarsContainerCSS();
     
-    n.resize();
+    n.rtwo();
     n.setBarsContainerCSS();
   })
   
-  n2.resize();
+  n2.rtwo();
   n2.setBarsContainerCSS();
   
   
   setTimeout(function(){
-      n.resize();
+      n.rtwo();
   n.setBarsContainerCSS();
     
   }, 1000);

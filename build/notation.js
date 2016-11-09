@@ -154,31 +154,35 @@ var Bar = (function () {
       "end" places a conjoining line at the end of the bar
     */
 
-    var className = "conjoining-line";
-    var left = 0;
-    var lineWidth = 1; //should set this dynamically probably
-    var width = undefined;
+    //establish class names for the different modifiers, then append the html with the correct name
+    var className = undefined;
 
     if (modifier === "bold") {
-      width = lineWidth * 2;
+      className = "conjoining-line bold";
+    } else if (modifier === "end") {
+      className = "conjoining-line end";
     } else {
-      width = lineWidth;
-    }
-
-    if (modifier === "end") {
-      className = "conjoining-line after";
-      var barWidth = $(this.reference).width();
-      left = barWidth;
+      className = "conjoining-line";
     }
 
     var html = '<div class="conjoining-line-container">' + '<div class="' + className + '">' + '</div>' + '</div>';
 
+    $(this.reference).prepend(html);
+
+    var left = undefined;
+    var lineWidth = 1; //should set this dynamically probably
+    var width = 1;
     var marginBottom = $(this.reference).css("margin-bottom");
     var height = parseInt($(this.reference).height() * 2) + parseInt(marginBottom.substr(0, marginBottom.length - 2)); //assumes the margin bottom is XXXpx and cuts off the px
 
+    //declare the left padding value if the modifier is "end"
+    if (modifier === "end") {
+      var barWidth = $(this.reference).width();
+      left = barWidth;
+    }
+
     var conjoiningLineContainerCSS = { "width": 0,
       "height": 0
-
     };
 
     var conjoiningLineCSS = { "width": width + "px",
@@ -186,20 +190,18 @@ var Bar = (function () {
       "background-color": "black",
       "position": "relative",
       "right": lineWidth + "px"
-
     };
 
-    //adds left padding to put the conjoining line on the end of the bar
-    var conjoiningLineCSSAfter = {
-      "left": left + "px"
+    var conjoiningLineCSSEnd = { "left": left + "px" };
 
-    };
-
-    $(this.reference).prepend(html);
+    var conjoiningLineCSSBold = { "width": width * 2 + "px" };
 
     $(this.reference).children(".conjoining-line-container").css(conjoiningLineContainerCSS);
     $(this.reference).find(".conjoining-line").css(conjoiningLineCSS);
-    $(this.reference).find(".after").css(conjoiningLineCSSAfter);
+
+    $(this.reference).find(".end").css(conjoiningLineCSSEnd);
+
+    $(this.reference).find(".bold").css(conjoiningLineCSSBold);
   };
 
   Bar.prototype.removeConjoiningLine = function removeConjoiningLine() {
@@ -1071,6 +1073,64 @@ var Notation = (function () {
             }
           }
         }
+    }
+  };
+
+  Notation.prototype.rtwo = function rtwo() {
+    $(this.container).find(".clef").remove(); //removes all the clefs already on the page
+    $(this.container).find(".conjoining-line-container").remove(); //removes all conjoining lines
+
+    var barContainers = $(this.container + " > ." + this.barsContainer).children(); //all the bar containers
+
+    for (var i = 0; i < barContainers.length; i++) {
+      var currentBarX = barContainers.eq(i).offset().top; //x position of current bar
+      var previousBarX = undefined; //x position of previous bar to compare it against, this is not set for the first bar obviously
+
+      //sets previous bar if the current bar is not the first
+      if (i > 0) {
+        previousBarX = barContainers.eq(i - 1).offset().top;
+      }
+
+      //adds the thicker line to the first bar of each line of bars
+      for (var i2 = 0; i2 < this.instruments.length; i2++) {
+
+        var instrument = this.instruments[i2];
+        var bar = instrument.bar(i + 1);
+
+        var prevBar = undefined;
+        if (i != 0) {
+          prevBar = instrument.bar(i);
+        }
+
+        if (!(instrument.id === this.instruments[this.instruments.length - 1].id)) {
+          if (bar != undefined) {
+            bar.addConjoiningLine();
+          }
+
+          if (previousBarX !== undefined) {
+            prevBar.addConjoiningLine("end");
+          }
+
+          //if it's the last bar
+          if (bar === instrument.bar(instrument.bars.length)) {
+            bar.addConjoiningLine("end");
+          }
+        }
+
+        if (currentBarX > previousBarX || previousBarX === undefined) {
+
+          bar.addClef(); //bars are 1 indexed, not 0;
+
+          //applies the thicker conjoining line to all bars but the last instrument
+          if (!(instrument.id === this.instruments[this.instruments.length - 1].id)) {
+
+            bar.addConjoiningLine("bold"); //the first line should be bold
+          }
+
+          //if it's not the very first bar, add the end of bar conjoining line to the previous bar
+        }
+        //adds the other, thinner lines to every other bar
+      }
     }
   };
 

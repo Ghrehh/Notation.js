@@ -192,6 +192,72 @@ class Notation {
     }
   }
   
+  rtwo(){
+      $(this.container).find(".clef").remove(); //removes all the clefs already on the page
+      $(this.container).find(".conjoining-line-container").remove() //removes all conjoining lines
+      
+      let barContainers = $(this.container + " > ." + this.barsContainer).children(); //all the bar containers
+      
+      for (let i = 0; i < barContainers.length; i++) {
+        let currentBarX = barContainers.eq(i).offset().top; //x position of current bar
+        let previousBarX; //x position of previous bar to compare it against, this is not set for the first bar obviously
+        
+        //sets previous bar if the current bar is not the first
+        if (i > 0) {
+          previousBarX = barContainers.eq(i - 1).offset().top;
+        }
+        
+       
+        //adds the thicker line to the first bar of each line of bars
+        for (let i2 = 0; i2 < this.instruments.length; i2++) {
+          
+          let instrument = this.instruments[i2];
+          let bar = instrument.bar(i + 1);
+          
+          let prevBar;
+          if (i != 0){
+            prevBar = instrument.bar(i);
+          }
+          
+          if(!(instrument.id === this.instruments[this.instruments.length - 1].id)){
+            if (bar != undefined){ 
+              bar.addConjoiningLine();
+            }
+            
+            if(previousBarX !== undefined){
+              prevBar.addConjoiningLine("end");
+            }
+          
+            //if it's the last bar
+            if(bar === instrument.bar(instrument.bars.length)){
+              bar.addConjoiningLine("end");
+            }
+          }
+          
+          if (currentBarX > previousBarX || previousBarX === undefined) {
+            
+            
+            bar.addClef(); //bars are 1 indexed, not 0;
+            
+            //applies the thicker conjoining line to all bars but the last instrument
+            if(!(instrument.id === this.instruments[this.instruments.length - 1].id)){
+              
+              bar.addConjoiningLine("bold"); //the first line should be bold
+            }
+            
+            //if it's not the very first bar, add the end of bar conjoining line to the previous bar
+  
+            
+          }
+          //adds the other, thinner lines to every other bar
+          
+
+          
+        }
+
+      }
+    }
+  
   setTitle(title){
     this.title = title;
     

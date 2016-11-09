@@ -143,57 +143,69 @@ class Bar {
       "end" places a conjoining line at the end of the bar
     */
     
-    let className = "conjoining-line";
-    let left = 0;
-    let lineWidth = 1; //should set this dynamically probably
-    let width;
+    //establish class names for the different modifiers, then append the html with the correct name
+    let className;
     
-    if (modifier === "bold"){
-      width = lineWidth * 2;
+    if (modifier === "bold") {
+      className = "conjoining-line bold";
+    }
+    else if (modifier === "end") {
+      className = "conjoining-line end";
     }
     else {
-      width = lineWidth ;
+      className = "conjoining-line";
     }
     
-    if (modifier === "end") {
-      className = "conjoining-line after";
-      let barWidth = $(this.reference).width();
-      left = barWidth;
-    }
-
     let html = '<div class="conjoining-line-container">' +
                   '<div class="' + className + '">' +
                   '</div>' +
                 '</div>'
                 
+    $(this.reference).prepend(html);
+    
+    
+    let left;
+    let lineWidth = 1; //should set this dynamically probably
+    let width = 1;
     let marginBottom = $(this.reference).css("margin-bottom");
     let height = parseInt($(this.reference).height() * 2) + parseInt(marginBottom.substr(0, marginBottom.length - 2)); //assumes the margin bottom is XXXpx and cuts off the px
+    
+
+    //declare the left padding value if the modifier is "end"
+    if (modifier === "end") {
+      let barWidth = $(this.reference).width();
+      left = barWidth;
+      
+    }
+
 
     let conjoiningLineContainerCSS = {"width": 0,
                                       "height": 0,
-                                   
-                                   }
+                                     }
                     
     let conjoiningLineCSS = {"width": width + "px",
                              "height": height + "px",
                              "background-color":"black",
                              "position":"relative",
                              "right": lineWidth + "px",
-                                   
                             }
                             
-    //adds left padding to put the conjoining line on the end of the bar
-    let conjoiningLineCSSAfter = {
-                                  "left": left + "px",
-                                   
-                                  }
+    let conjoiningLineCSSEnd = { "left": left + "px", }
+
+    let conjoiningLineCSSBold = { "width": (width * 2) + "px", }
     
     
-    $(this.reference).prepend(html);
+    
     
     $(this.reference).children(".conjoining-line-container").css(conjoiningLineContainerCSS);
     $(this.reference).find(".conjoining-line").css(conjoiningLineCSS);
-    $(this.reference).find(".after").css(conjoiningLineCSSAfter);
+    
+
+    $(this.reference).find(".end").css(conjoiningLineCSSEnd);
+    
+    
+    $(this.reference).find(".bold").css(conjoiningLineCSSBold);
+    
     
     
   }
