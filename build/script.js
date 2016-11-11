@@ -1,5 +1,5 @@
 $(document).ready(function(){
-  var n = new Notation(".container");
+  /*var n = new Notation(".container");
   
   var i =  n.addInstrument("Guitar 1", "bass");
   var i3 =  n.addInstrument("Guitar 2");
@@ -142,7 +142,39 @@ $(document).ready(function(){
   n2.addBar()
   
   n.setTitle("Test Title")
-  n.setTempo("120 BPM")
+  n.setTempo("120 BPM")*/
+  
+  var n = new Notation(".container");
+  
+  var i =  n.addInstrument("Guitar 1", "bass");
+  var i3 =  n.addInstrument("Guitar 2");
+  var i2 =  n.addInstrument("Poland");
+  var i4 =  n.addInstrument("Camel");
+  
+  
+  n.addBar();
+  n.addBar();
+  n.addBar();
+  n.addBar();
+  var note1 = i.bar(1).addNote("E4", "quarter-note");
+  var note2 = i.bar(1).addNote("B3", "quarter-note");
+  
+  note1.beam.calculate(note2);
+  
+  setTimeout(function(){
+      n.rtwo();
+      n.setBarsContainerCSS();
+  }, 1000);
+  
+  
+  $(window).resize(function(){
+    n.rtwo();
+    n.setBarsContainerCSS();
+  })
+  
+  
+  
+
 
 })
 

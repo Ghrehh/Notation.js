@@ -362,7 +362,102 @@ var Bar = (function () {
 exports["default"] = Bar;
 module.exports = exports["default"];
 
-},{"./keySignature":3,"./note":5,"./timeSignature":6}],2:[function(require,module,exports){
+},{"./keySignature":4,"./note":6,"./timeSignature":7}],2:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var Beam = (function () {
+  function Beam(note) {
+    _classCallCheck(this, Beam);
+
+    this.note = note;
+    this.containerReference;
+    this.reference;
+
+    this.initialize();
+  }
+
+  Beam.prototype.initialize = function initialize() {
+    this.printBeamContainer();
+    this.printBeam();
+  };
+
+  Beam.prototype.calculate = function calculate(targetNote) {
+    if (targetNote === undefined) {
+      throw "Beam.calculateBeam must be given a target note";
+    }
+
+    var firstNote = $(this.note.noteStemReference).offset();
+    var secondNote = $(targetNote.noteStemReference).offset();
+
+    var beamPointingUp = true;
+
+    var adj = secondNote.left - firstNote.left;
+
+    var opp = firstNote.top - secondNote.top;
+    if (opp < 0) {
+      //if the second note has a lower x axis than the first and the beam needs to point down
+      opp = Math.abs(opp);
+      beamPointingUp = false;
+    } //makes the opp a positive number if it is negative
+
+    var hyp = Math.sqrt(adj * adj + opp * opp);
+
+    var angle = Math.atan(opp / adj) * 180 / Math.PI;
+
+    if (beamPointingUp == true) {
+      angle = angle - angle - angle; //turns it into a negative number, which makes the beam point up. 
+    }
+
+    this.setBeamContainerCSS(angle);
+    this.setBeamCSS(hyp);
+  };
+
+  Beam.prototype.printBeamContainer = function printBeamContainer() {
+    var html = '<div class="beam-container"></div>';
+
+    $(this.note.noteStemReference).append(html);
+    this.containerReference = $(this.note.noteStemReference).children();
+  };
+
+  Beam.prototype.printBeam = function printBeam() {
+    var html = '<div class="beam"></div>';
+
+    $(this.containerReference).append(html);
+    this.reference = $(this.containerReference).children();
+  };
+
+  Beam.prototype.setBeamContainerCSS = function setBeamContainerCSS(rotate) {
+
+    var css = { "height": "0px",
+      "width": "0px",
+      "transform": "rotate(" + rotate + "deg)"
+    };
+
+    $(this.containerReference).css(css);
+  };
+
+  Beam.prototype.setBeamCSS = function setBeamCSS(width) {
+    var stemHeight = 3;
+
+    var css = { "height": stemHeight + "px",
+      "width": width + "px",
+      "background-color": "black"
+    };
+
+    $(this.reference).css(css);
+  };
+
+  return Beam;
+})();
+
+exports['default'] = Beam;
+module.exports = exports['default'];
+
+},{}],3:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -508,7 +603,7 @@ var Instrument = (function () {
 exports['default'] = Instrument;
 module.exports = exports['default'];
 
-},{"./bar":1}],3:[function(require,module,exports){
+},{"./bar":1}],4:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -882,7 +977,7 @@ var KeySignature = (function () {
 exports["default"] = KeySignature;
 module.exports = exports["default"];
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -1241,18 +1336,25 @@ window.Notation = Notation; //makes the module global
 exports["default"] = Notation;
 module.exports = exports["default"];
 
-},{"./instrument":2}],5:[function(require,module,exports){
+},{"./instrument":3}],6:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
 
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _beam = require("./beam");
+
+var _beam2 = _interopRequireDefault(_beam);
 
 var Note = (function () {
   function Note(bar, pitch, duration, parentNote) {
     _classCallCheck(this, Note);
 
     this.bar = bar;
+    this.beam;
 
     this.parentNote = parentNote;
     this.childNotes = []; //notes that inhabit the same index as this note to make a chord
@@ -1338,6 +1440,8 @@ var Note = (function () {
       this.setNoteStemReference();
       this.setNoteStemCSS();
     }
+
+    this.beam = new _beam2["default"](this);
   };
 
   Note.prototype.setBeam = function setBeam() {};
@@ -1679,7 +1783,7 @@ var Note = (function () {
 exports["default"] = Note;
 module.exports = exports["default"];
 
-},{}],6:[function(require,module,exports){
+},{"./beam":2}],7:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -1830,4 +1934,4 @@ var TimeSignature = (function () {
 exports["default"] = TimeSignature;
 module.exports = exports["default"];
 
-},{}]},{},[4]);
+},{}]},{},[5]);

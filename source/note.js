@@ -1,6 +1,10 @@
+import Beam from "./beam";
+
 class Note {
   constructor(bar, pitch, duration, parentNote){
     this.bar = bar;
+    this.beam;
+   
     
     this.parentNote = parentNote;
     this.childNotes = []; //notes that inhabit the same index as this note to make a chord
@@ -38,7 +42,8 @@ class Note {
     if (this.noteParameters === undefined) {
       throw "note/octave '" + this.pitch + "' not recognised in note.getNoteParameters()"
     }
-
+    
+    
   }
   
   initialize(){
@@ -67,6 +72,7 @@ class Note {
     this.setNoteHeadReference();
     this.setNoteHeadCSS();
     
+    
     //ledger lines
     if (this.noteParameters.ledgerLinePosition !== undefined){
       for(let i = 0; i < this.noteParameters.ledgerLineNumber; i++){
@@ -91,7 +97,7 @@ class Note {
       this.setNoteStemCSS();
     }
     
-    
+    this.beam = new Beam(this);
   }
   
   setBeam(){

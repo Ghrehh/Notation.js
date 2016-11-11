@@ -347,6 +347,7 @@ class Notation {
     this.setBarsContainerCSS();
         
   }
+  
   getInstrumentNameContainerCSS(){
     return {"display": "inline-block",
             "vertical-align": "top",
@@ -355,8 +356,6 @@ class Notation {
         
             }
   }
-  
-
   
   //removes empty bar containers after deleting instruments or bars
   removeEmptyBarContainers() {
