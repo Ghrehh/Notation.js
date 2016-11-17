@@ -1,14 +1,18 @@
 import Instrument from './instrument';
 
 class Notation {
-  constructor(container) {
+  constructor(container, size) {
     
     this.trebleClefPath = "./media/clef.png";
     this.bassClefPath = "./media/bass.png";
     
     this.keySignature = "C";
     
-    this.barHeight = 35; //height of bars and instrument name divs
+    this.barHeight = 35; //height of bars and instrument name divs, can be fined when creatign the object but defaults to 35
+    if (size !== undefined && typeof(size) === "number" && size > 0){
+      this.barHeight = size;
+    } //if size is a positive int will make barHeight that size;
+    
     this.marginAboveBar = this.barHeight;
     this.marginUnderBar = this.barHeight;
     this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)

@@ -97,14 +97,16 @@ QUnit.module( "Instrument", function(){
     var two = n.addInstrument("Guitar 2");
     var three = n.addInstrument("Guitar 3");
     
-    assert.ok( $(".bar-container").children().length === 3, "Passed!" ); 
+    
+    //it should expect 4 children and not 3 because of the "bar number container"
+    assert.ok( $(".bar-container").children().length === 4, "Passed!" ); 
     assert.ok( $(".instrument-name-container").children().length === 3, "Passed!" ); 
     assert.ok( n.instruments.length === 3, "Passed!" );
     
     n.removeInstrument(three);
   
-    
-    assert.ok( $(".bar-container").children().length === 2, "Passed!" ); 
+    //it should expect 3 children and not 2 because of the "bar number container"
+    assert.ok( $(".bar-container").children().length === 3, "Passed!" ); 
     assert.ok( $(".instrument-name-container").children().length === 2, "Passed!" ); 
     assert.ok( n.instruments.length === 2, "Passed!" );
   
@@ -189,12 +191,23 @@ QUnit.module( "Bar", function(){
     var bar2 = instrumentOne.bar(2);
     
     assert.ok( bar2.id === 1, "Passed!" ); 
-    
-    
-    
-  
-  
+
   });
+  
+  QUnit.test("Bar Number should display and be the correct number", function( assert ) {
+    var n = new Notation(".container");
+    n.addInstrument("Guitar 1");
+
+    assert.ok( $(".number-container").length === 1, "Passed!" );
+    assert.ok( $(".number").html() === "1", "Passed!" );
+    
+    n.addBar();
+    
+    assert.ok( $(".number-container").length === 2, "Passed!" );
+    assert.ok( $(".number").eq(0).html() === "1", "Passed!" );
+    assert.ok( $(".number").eq(1).html() === "2", "Passed!" );
+  });
+  
 });
 
 QUnit.module( "KeySignature", function(){
@@ -390,8 +403,6 @@ QUnit.module( "TimeSignature", function(){
 
 
 });
-
-
 
 
 

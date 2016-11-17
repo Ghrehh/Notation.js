@@ -363,19 +363,35 @@ exports["default"] = Bar;
 module.exports = exports["default"];
 
 },{"./keySignature":4,"./note":6,"./timeSignature":7}],2:[function(require,module,exports){
-'use strict';
+//Need to have a bool for wether the Beam has been "beamed" or not
+//Need a way of having a max slope for the beam
+// if one note beams down, they all beam down
+//need to beam from the bottom of the stem if the notes are beamed down
+
+"use strict";
 
 exports.__esModule = true;
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Beam = (function () {
   function Beam(note) {
     _classCallCheck(this, Beam);
 
     this.note = note;
+
     this.containerReference;
     this.reference;
+
+    this.endNote;
+    this.beamedNotes = []; //array of any additional notes to be beamed between the first and last
+
+    this.stemFacingDown;
+
+    this.adj;
+    this.opp;
+    this.hyp;
+    this.angle;
 
     this.initialize();
   }
@@ -385,9 +401,89 @@ var Beam = (function () {
     this.printBeam();
   };
 
-  Beam.prototype.calculate = function calculate(targetNote) {
+  Beam.prototype.beamTo = function beamTo(endNote) {
+    if (endNote === undefined) {
+      throw "Beam.beamTo() must be given a target note";
+    } else {
+      this.endNote = endNote;
+    }
+
+    //if there are any notes between the start and endNote place them in an array
+    if (endNote.noteContainerID - 1 !== this.note.noteContainerID) {
+      this.getMiddleNotes();
+    }
+
+    this.sanitizeNotes();
+    this.calculate();
+    this.setBeamContainerCSS(this.angle);
+    this.setBeamCSS(this.hyp);
+  };
+
+  //if there are more than two notes beamed together, get the notes between the first note and final note and push them in this.beamedNotes
+
+  Beam.prototype.getMiddleNotes = function getMiddleNotes() {
+    var bar = this.note.bar;
+
+    for (var i = this.note.noteContainerID; i < this.endNote.noteContainerID - 1; i++) {
+      var note = bar.note(i + 2); //plus 2 because we want the note after the current one, and another + 1 because the Bar.note() method is 1 indexed note 0 indexed
+
+      if (note === undefined) {
+        throw "unable to find note in Beam.getMiddleNotes()";
+      } else {
+        this.beamedNotes.push(note);
+      }
+
+      console.log("running");
+      console.log(note);
+    }
+  };
+
+  //ensures all notes stems are in the same direction before they are beamed
+
+  Beam.prototype.sanitizeNotes = function sanitizeNotes() {
+
+    //currently, if any note stems face down, make all notes being beamed face down
+
+    //check if any of the notes stem downwards
+    this.stemFacingDown = false;
+
+    if (this.note.noteParameters.stemDirection === "down") {
+      this.stemFacingDown = true;
+    } else if (this.endNote.noteParameters.stemDirection === "down") {
+      this.stemFacingDown = true;
+    }
+
+    if (this.stemFacingDown === false) {
+      for (var i = 0; i < this.beamedNotes.length - 1; i++) {
+        var note = this.beamedNotes[i];
+
+        if (note.noteParameters.stemDirection === "down") {
+          this.stemFacingDown = true;
+        }
+      }
+    } //loops through the other beamed notes, only called if neither of the previous two if statements were true
+
+    //if any of them did face down, make all notes face down
+
+    if (this.stemFacingDown === true) {
+      this.note.changeStemDirection("down");
+      this.endNote.changeStemDirection("down");
+
+      for (var i = 0; i < this.beamedNotes.length - 1; i++) {
+
+        var note = this.beamedNotes[i];
+
+        note.changeStemDirection("down");
+      }
+    }
+  };
+
+  //calculates angles and lengths
+
+  Beam.prototype.calculate = function calculate() {
+    var targetNote = this.endNote;
     if (targetNote === undefined) {
-      throw "Beam.calculateBeam must be given a target note";
+      throw "Beam.calculate: Beam.endNote was not defined";
     }
 
     var firstNote = $(this.note.noteStemReference).offset();
@@ -395,25 +491,26 @@ var Beam = (function () {
 
     var beamPointingUp = true;
 
-    var adj = secondNote.left - firstNote.left;
+    this.adj = secondNote.left - firstNote.left;
 
-    var opp = firstNote.top - secondNote.top;
-    if (opp < 0) {
+    this.opp = firstNote.top - secondNote.top;
+    if (this.opp < 0) {
       //if the second note has a lower x axis than the first and the beam needs to point down
-      opp = Math.abs(opp);
+      this.opp = Math.abs(this.opp);
       beamPointingUp = false;
     } //makes the opp a positive number if it is negative
 
-    var hyp = Math.sqrt(adj * adj + opp * opp);
+    this.hyp = Math.sqrt(this.adj * this.adj + this.opp * this.opp);
 
-    var angle = Math.atan(opp / adj) * 180 / Math.PI;
+    this.angle = Math.atan(this.opp / this.adj) * 180 / Math.PI;
 
-    if (beamPointingUp == true) {
-      angle = angle - angle - angle; //turns it into a negative number, which makes the beam point up. 
+    if (this.angle > 12.8) {
+      this.angle = 12.8;
     }
 
-    this.setBeamContainerCSS(angle);
-    this.setBeamCSS(hyp);
+    if (beamPointingUp == true) {
+      this.angle = this.angle - this.angle - this.angle; //turns it into a negative number, which makes the beam point up. 
+    }
   };
 
   Beam.prototype.printBeamContainer = function printBeamContainer() {
@@ -431,19 +528,29 @@ var Beam = (function () {
   };
 
   Beam.prototype.setBeamContainerCSS = function setBeamContainerCSS(rotate) {
+    var beamHeight = 3;
+    var top = "0px";
+
+    if (this.stemFacingDown === true) {
+      var noteStemHeightRaw = $(this.note.noteReference).find(".note-stem").css("height");
+      var noteStemHeightInt = parseInt($(this.note.noteReference).find(".note-stem").css("height").substr(0, noteStemHeightRaw.length - 2)); //shaves of the "px"
+      top = noteStemHeightInt - beamHeight;
+    }
 
     var css = { "height": "0px",
       "width": "0px",
-      "transform": "rotate(" + rotate + "deg)"
+      "transform": "rotate(" + rotate + "deg)",
+      "position": "relative",
+      "top": top + "px"
     };
 
     $(this.containerReference).css(css);
   };
 
   Beam.prototype.setBeamCSS = function setBeamCSS(width) {
-    var stemHeight = 3;
+    var beamHeight = 3;
 
-    var css = { "height": stemHeight + "px",
+    var css = { "height": beamHeight + "px",
       "width": width + "px",
       "background-color": "black"
     };
@@ -454,8 +561,8 @@ var Beam = (function () {
   return Beam;
 })();
 
-exports['default'] = Beam;
-module.exports = exports['default'];
+exports["default"] = Beam;
+module.exports = exports["default"];
 
 },{}],3:[function(require,module,exports){
 'use strict';
@@ -991,7 +1098,7 @@ var _instrument = require('./instrument');
 var _instrument2 = _interopRequireDefault(_instrument);
 
 var Notation = (function () {
-  function Notation(container) {
+  function Notation(container, size) {
     _classCallCheck(this, Notation);
 
     this.trebleClefPath = "./media/clef.png";
@@ -999,7 +1106,11 @@ var Notation = (function () {
 
     this.keySignature = "C";
 
-    this.barHeight = 35; //height of bars and instrument name divs
+    this.barHeight = 35; //height of bars and instrument name divs, can be fined when creatign the object but defaults to 35
+    if (size !== undefined && typeof size === "number" && size > 0) {
+      this.barHeight = size;
+    } //if size is a positive int will make barHeight that size;
+
     this.marginAboveBar = this.barHeight;
     this.marginUnderBar = this.barHeight;
     this.marginUnderBarContainer = 20; //the amount of padidng under the CONTAINERS (instrument name container, bar-container)
@@ -1775,6 +1886,38 @@ var Note = (function () {
     };
 
     return noteDictionary[note];
+  };
+
+  Note.prototype.changeStemDirection = function changeStemDirection(direction) {
+    //if you specify a direction it will change the stem to that direction if it isn't already facing that way
+
+    //throw error if the stem doesn't already have a defined direction
+    if (this.noteParameters.stemDirection === undefined) {
+      throw "in note.changeStemDirection(): the stem direction can not be changed as one was not defined";
+    }
+
+    //call this section if direction is undefined
+    if (direction === "up") {
+      if (this.noteParameters.stemDirection !== "up") {
+        this.noteParameters.stemDirection = "up";
+      }
+    } else if (direction === "down") {
+      if (this.noteParameters.stemDirection !== "down") {
+        this.noteParameters.stemDirection = "down";
+      }
+    } else if (direction === undefined) {
+      //flip the stem direction
+      if (this.noteParameters.stemDirection === "up") {
+        this.noteParameters.stemDirection = "down";
+      } else if (this.noteParameters.stemDirection === "down") {
+        this.noteParameters.stemDirection = "up";
+      }
+    } else {
+      throw "a valid parameter was not passed to Note.changeStemDirection() [parameter passed: " + direction;+"]";
+    }
+
+    //reapply the css to the stem
+    this.setNoteStemCSS();
   };
 
   return Note;

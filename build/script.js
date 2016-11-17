@@ -156,10 +156,14 @@ $(document).ready(function(){
   n.addBar();
   n.addBar();
   n.addBar();
-  var note1 = i.bar(1).addNote("E4", "quarter-note");
-  var note2 = i.bar(1).addNote("B3", "quarter-note");
+  var note1 = i.bar(1).addNote("C5", "quarter-note");
+  i.bar(1).addNote("F5", "quarter-note")
+  i.bar(1).addNote("A5", "quarter-note")
+  var note2 = i.bar(1).addNote("G5", "quarter-note");
   
-  note1.beam.calculate(note2);
+  note1.beam.beamTo(note2);
+  
+ 
   
   setTimeout(function(){
       n.rtwo();

@@ -453,6 +453,43 @@ class Note {
                         
     return noteDictionary[note];
   }
+  
+  changeStemDirection(direction){
+    //if you specify a direction it will change the stem to that direction if it isn't already facing that way
+    
+    //throw error if the stem doesn't already have a defined direction
+    if (this.noteParameters.stemDirection === undefined) {
+      throw "in note.changeStemDirection(): the stem direction can not be changed as one was not defined";
+    }
+    
+    //call this section if direction is undefined
+    if (direction === "up") {
+      if (this.noteParameters.stemDirection !== "up") {
+        this.noteParameters.stemDirection = "up";
+      }
+    }
+    else if (direction === "down"){
+      if (this.noteParameters.stemDirection !== "down") {
+        this.noteParameters.stemDirection = "down";
+      }
+    }
+    else if (direction === undefined){
+      //flip the stem direction
+      if (this.noteParameters.stemDirection === "up" ){
+        this.noteParameters.stemDirection = "down";
+      }
+      else if (this.noteParameters.stemDirection === "down" ){
+        this.noteParameters.stemDirection = "up";
+      }
+    
+    }
+    else {
+      throw "a valid parameter was not passed to Note.changeStemDirection() [parameter passed: " + direction; + "]"
+    }
+    
+    //reapply the css to the stem
+    this.setNoteStemCSS();
+  }
 
 }
 export default Note;
