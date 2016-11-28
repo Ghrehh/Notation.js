@@ -44,6 +44,7 @@ class Beam {
     
     this.pickStemDirection();
     this.calculate();
+    this.resizeMiddleNotes();
     this.setBeamContainerCSS(this.angle);
     this.setBeamCSS(this.hyp);
     
@@ -125,7 +126,7 @@ class Beam {
     let firstNote = $(this.note.noteStemReference).offset();
     let secondNote = $(targetNote.noteStemReference).offset();
     
-    let this.beamPointingUp = true;
+    this.beamPointingUp = true;
     
     this.adj = secondNote.left - firstNote.left;
     
@@ -152,9 +153,9 @@ class Beam {
       
     }
     
-    if (this.beamPointingUp == true){
-      this.angle = this.angle - this.angle - this.angle; //turns it into a negative number, which makes the beam point up.   
-    }
+    //round to 2 decimal places
+    this.angle = this.angle.toFixed(1);
+    
     
 
   }
@@ -180,18 +181,67 @@ class Beam {
   }
   
   resizeMiddleNotes(){
+  
     let firstNote = this.note;
+    let beamWidth = 2;
     
     for (let i = 0; i < this.middleNotes.length; i++ ){
       let middleNote = this.middleNotes[i];
+      console.log("")
+      console.log(middleNote)
+      console.log("firstNote Pos: " + $(firstNote.noteStemReference).offset().left)
+      console.log("middleNote Pos: " + $(middleNote.noteStemReference).offset().left)
       
       let opp = $(middleNote.noteStemReference).offset().left - $(firstNote.noteStemReference).offset().left;
-      let adj = opp / Math.tan(this.angle * 180/Math.PI); // opp/tan(angle)
+      let adj = opp / Math.tan((90 - this.angle) * Math.PI/180); // opp/tan(angle) 90- this.angle because the angle applied to the css is the outside angle, I need the inside. note Math.PI/180 is the opposite of the function used on the one above
+      // console.log(30 / Math.tan(90* 180/Math.PI))
+      
+      let targetPos; //Position along beam where the middle notes stem needs to be cut/extended to
+      let currentPos; //current location of the top/bottom of the middle note
+      let currentHeight = $(middleNote.noteStemReference).height();
       
       if (this.stemFacingDown) {
+        let bottomOfStem = $(this.note.noteStemReference).offset().top + $(this.note.noteStemReference).height();
+        currentPos = $(middleNote.noteStemReference).offset().top + $(middleNote.noteStemReference).height()
+        
+        if (this.beamPointingUp){
+          targetPos = bottomOfStem - adj;
+        }
+        else {
+          targetPos = bottomOfStem + adj;
+        }
+        
+        middleNote.setNoteStemCSS(currentHeight + (targetPos - currentPos ));
+      }
+      else {
+        let topOfStem = $(this.note.noteStemReference).offset().top;
+        currentPos = $(middleNote.noteStemReference).offset().top;
+        
+        if (this.beamPointingUp){
+          targetPos = topOfStem - adj;
+        }
+        else {
+          targetPos = topOfStem + adj;
+        }
+        
+        middleNote.setNoteStemCSS(currentHeight + (currentPos - targetPos - beamWidth ));
         
       }
+      console.log("currentPos: " + currentPos);
+      console.log("targetPos: " + targetPos);
+      
+      console.log("")
+      console.log("angle: " + (90 - this.angle))
+      console.log("opp: " + opp)
+      console.log("adj: " + adj)
+      console.log("adjustment: " + (currentPos - targetPos))
+
+      
+      
+
+      
     }
+    
   }
   
   
@@ -218,6 +268,10 @@ class Beam {
       let noteStemHeightInt = parseInt($(this.note.noteReference).find(".note-stem").css("height").substr(0, noteStemHeightRaw.length - 2)); //shaves of the "px"
       top = noteStemHeightInt - beamHeight;
 
+    }
+    
+    if (this.beamPointingUp == true){
+      rotate = rotate - rotate - rotate; //turns it into a negative number, which makes the beam point up.   
     }
     
     let css = {"height":"0px",

@@ -156,10 +156,22 @@ $(document).ready(function(){
   n.addBar();
   n.addBar();
   n.addBar();
-  var note1 = i.bar(1).addNote("A4", "eighth-note");
+  var note1 = i.bar(1).addNote("F4", "eighth-note");
   i.bar(1).addNote("F4", "eighth-note")
-  i.bar(1).addNote("A4", "eighth-note")
-  var note2 = i.bar(1).addNote("C4", "eighth-note");
+  i.bar(1).addNote("G4", "eighth-note")
+  i.bar(1).addNote("G4", "eighth-note")
+  i.bar(1).addNote("G4", "eighth-note")
+  i.bar(1).addNote("G4", "eighth-note")
+  var note2 = i.bar(1).addNote("F4", "eighth-note");
+  
+  note1.beam.beamTo(note2);
+  
+  var note1 = i.bar(1).addNote("C5", "eighth-note");
+  i.bar(1).addNote("G5", "eighth-note")
+  i.bar(1).addNote("G5", "eighth-note")
+  i.bar(1).addNote("G5", "eighth-note")
+
+  var note2 = i.bar(1).addNote("C5", "eighth-note");
   
   note1.beam.beamTo(note2);
   

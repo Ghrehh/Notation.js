@@ -384,8 +384,9 @@ var Beam = (function () {
     this.reference;
 
     this.endNote;
-    this.beamedNotes = []; //array of any additional notes to be beamed between the first and last
+    this.middleNotes = []; //array of any additional notes to be beamed between the first and last
 
+    this.beamPointingUp;
     this.stemFacingDown;
 
     this.adj;
@@ -415,11 +416,12 @@ var Beam = (function () {
 
     this.pickStemDirection();
     this.calculate();
+    this.resizeMiddleNotes();
     this.setBeamContainerCSS(this.angle);
     this.setBeamCSS(this.hyp);
   };
 
-  //if there are more than two notes beamed together, get the notes between the first note and final note and push them in this.beamedNotes
+  //if there are more than two notes beamed together, get the notes between the first note and final note and push them in this.middleNotes
 
   Beam.prototype.getMiddleNotes = function getMiddleNotes() {
     var bar = this.note.bar;
@@ -430,7 +432,7 @@ var Beam = (function () {
       if (note === undefined) {
         throw "unable to find note in Beam.getMiddleNotes()";
       } else {
-        this.beamedNotes.push(note);
+        this.middleNotes.push(note);
       }
     }
   };
@@ -451,8 +453,8 @@ var Beam = (function () {
     }
 
     if (this.stemFacingDown === false) {
-      for (var i = 0; i < this.beamedNotes.length; i++) {
-        var note = this.beamedNotes[i];
+      for (var i = 0; i < this.middleNotes.length; i++) {
+        var note = this.middleNotes[i];
 
         if (note.noteParameters.stemDirection === "down") {
           this.stemFacingDown = true;
@@ -466,9 +468,9 @@ var Beam = (function () {
       this.note.changeStemDirection("down");
       this.endNote.changeStemDirection("down");
 
-      for (var i = 0; i < this.beamedNotes.length; i++) {
+      for (var i = 0; i < this.middleNotes.length; i++) {
 
-        var note = this.beamedNotes[i];
+        var note = this.middleNotes[i];
 
         note.changeStemDirection("down");
       }
@@ -490,7 +492,7 @@ var Beam = (function () {
     var firstNote = $(this.note.noteStemReference).offset();
     var secondNote = $(targetNote.noteStemReference).offset();
 
-    var beamPointingUp = true;
+    this.beamPointingUp = true;
 
     this.adj = secondNote.left - firstNote.left;
 
@@ -498,7 +500,7 @@ var Beam = (function () {
     if (this.opp < 0) {
       //if the second note has a lower x axis than the first and the beam needs to point down
       this.opp = Math.abs(this.opp);
-      beamPointingUp = false;
+      this.beamPointingUp = false;
     } //makes the opp a positive number if it is negative
 
     this.hyp = Math.sqrt(this.adj * this.adj + this.opp * this.opp);
@@ -513,22 +515,19 @@ var Beam = (function () {
       this.hyp = Math.sqrt(this.adj * this.adj + spaceHeight * spaceHeight);
 
       //if the beam needed to be set to the max angle, then the second stem wont be connected to it, stems need to be shortened/lengthened
-      this.readjustFirstAndLastStems(this.opp - spaceHeight); //this.opp - spaceheight will be the gap between the second note and the stem
+      this.resizeFirstAndLastStems(this.opp - spaceHeight); //this.opp - spaceheight will be the gap between the second note and the stem
     }
 
-    if (beamPointingUp == true) {
-      this.angle = this.angle - this.angle - this.angle; //turns it into a negative number, which makes the beam point up. 
-    }
+    //round to 2 decimal places
+    this.angle = this.angle.toFixed(1);
   };
 
   //fixes the length of the first and last stems if the stem angle needed to be readjusted
 
-  Beam.prototype.readjustFirstAndLastStems = function readjustFirstAndLastStems(space) {
+  Beam.prototype.resizeFirstAndLastStems = function resizeFirstAndLastStems(space) {
 
     var first = $(this.note.noteHeadReference).offset().top;
     var second = $(this.endNote.noteHeadReference).offset().top;
-    console.log(first);
-    console.log(second);
 
     //make first note taller
     if (this.stemFacingDown && first < second || this.stemFacingDown === false && first > second) {
@@ -540,6 +539,60 @@ var Beam = (function () {
         var currentHeight = $(this.note.noteStemReference).height();
         this.endNote.setNoteStemCSS(currentHeight + space);
       }
+  };
+
+  Beam.prototype.resizeMiddleNotes = function resizeMiddleNotes() {
+
+    var firstNote = this.note;
+    var beamWidth = 2;
+
+    for (var i = 0; i < this.middleNotes.length; i++) {
+      var middleNote = this.middleNotes[i];
+      console.log("");
+      console.log(middleNote);
+      console.log("firstNote Pos: " + $(firstNote.noteStemReference).offset().left);
+      console.log("middleNote Pos: " + $(middleNote.noteStemReference).offset().left);
+
+      var opp = $(middleNote.noteStemReference).offset().left - $(firstNote.noteStemReference).offset().left;
+      var adj = opp / Math.tan((90 - this.angle) * Math.PI / 180); // opp/tan(angle) 90- this.angle because the angle applied to the css is the outside angle, I need the inside. note Math.PI/180 is the opposite of the function used on the one above
+      // console.log(30 / Math.tan(90* 180/Math.PI))
+
+      var targetPos = undefined; //Position along beam where the middle notes stem needs to be cut/extended to
+      var currentPos = undefined; //current location of the top/bottom of the middle note
+      var currentHeight = $(middleNote.noteStemReference).height();
+
+      if (this.stemFacingDown) {
+        var bottomOfStem = $(this.note.noteStemReference).offset().top + $(this.note.noteStemReference).height();
+        currentPos = $(middleNote.noteStemReference).offset().top + $(middleNote.noteStemReference).height();
+
+        if (this.beamPointingUp) {
+          targetPos = bottomOfStem - adj;
+        } else {
+          targetPos = bottomOfStem + adj;
+        }
+
+        middleNote.setNoteStemCSS(currentHeight + (targetPos - currentPos));
+      } else {
+        var topOfStem = $(this.note.noteStemReference).offset().top;
+        currentPos = $(middleNote.noteStemReference).offset().top;
+
+        if (this.beamPointingUp) {
+          targetPos = topOfStem - adj;
+        } else {
+          targetPos = topOfStem + adj;
+        }
+
+        middleNote.setNoteStemCSS(currentHeight + (currentPos - targetPos - beamWidth));
+      }
+      console.log("currentPos: " + currentPos);
+      console.log("targetPos: " + targetPos);
+
+      console.log("");
+      console.log("angle: " + (90 - this.angle));
+      console.log("opp: " + opp);
+      console.log("adj: " + adj);
+      console.log("adjustment: " + (currentPos - targetPos));
+    }
   };
 
   Beam.prototype.printBeamContainer = function printBeamContainer() {
@@ -564,6 +617,10 @@ var Beam = (function () {
       var noteStemHeightRaw = $(this.note.noteReference).find(".note-stem").css("height");
       var noteStemHeightInt = parseInt($(this.note.noteReference).find(".note-stem").css("height").substr(0, noteStemHeightRaw.length - 2)); //shaves of the "px"
       top = noteStemHeightInt - beamHeight;
+    }
+
+    if (this.beamPointingUp == true) {
+      rotate = rotate - rotate - rotate; //turns it into a negative number, which makes the beam point up. 
     }
 
     var css = { "height": "0px",
