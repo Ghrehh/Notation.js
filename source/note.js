@@ -250,8 +250,9 @@ class Note {
     $(this.noteStemContainerReference).css(this.getNoteStemContainerCSS());
   }
   
-  setNoteStemCSS(){
-    $(this.noteStemReference).css(this.getNoteStemCSS());
+  //optional height for changes later
+  setNoteStemCSS(height){
+    $(this.noteStemReference).css(this.getNoteStemCSS(height));
   }
   
   
@@ -394,10 +395,15 @@ class Note {
     }
   }
   
-  getNoteStemCSS(){
+  getNoteStemCSS(height){
     let noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
     let stemWidth = 1;
     let stemHeight = noteHeadHeight * 3.0;
+
+    if (height !== undefined){
+      stemHeight = height
+    }
+
     let left;
     let bottom;
     

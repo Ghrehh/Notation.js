@@ -11,8 +11,9 @@ class Beam {
     this.reference;
     
     this.endNote;
-    this.beamedNotes = []; //array of any additional notes to be beamed between the first and last
+    this.middleNotes = []; //array of any additional notes to be beamed between the first and last
     
+    this.beamPointingUp;
     this.stemFacingDown;
     
     this.adj;
@@ -41,7 +42,7 @@ class Beam {
       this.getMiddleNotes();
     }
     
-    this.sanitizeNotes();
+    this.pickStemDirection();
     this.calculate();
     this.setBeamContainerCSS(this.angle);
     this.setBeamCSS(this.hyp);
@@ -49,7 +50,7 @@ class Beam {
     
   }
   
-  //if there are more than two notes beamed together, get the notes between the first note and final note and push them in this.beamedNotes
+  //if there are more than two notes beamed together, get the notes between the first note and final note and push them in this.middleNotes
   getMiddleNotes(){
     let bar = this.note.bar;
     
@@ -60,16 +61,13 @@ class Beam {
         throw "unable to find note in Beam.getMiddleNotes()";
       }
       else {
-        this.beamedNotes.push(note);
+        this.middleNotes.push(note);
       }
-      
-      console.log("running");
-      console.log(note)
     }
   }
   
   //ensures all notes stems are in the same direction before they are beamed
-  sanitizeNotes(){
+  pickStemDirection(){
 
     //currently, if any note stems face down, make all notes being beamed face down
     
@@ -84,8 +82,8 @@ class Beam {
     }
     
     if (this.stemFacingDown === false) {
-      for (let i = 0; i < this.beamedNotes.length - 1; i++){
-      let note = this.beamedNotes[i];
+      for (let i = 0; i < this.middleNotes.length; i++){
+      let note = this.middleNotes[i];
       
       if (note.noteParameters.stemDirection === "down"){
         this.stemFacingDown = true;
@@ -99,15 +97,20 @@ class Beam {
       this.note.changeStemDirection("down");
       this.endNote.changeStemDirection("down");
       
-      for (let i = 0; i < this.beamedNotes.length - 1; i++){
+      for (let i = 0; i < this.middleNotes.length; i++){
         
-        let note = this.beamedNotes[i];
+        let note = this.middleNotes[i];
         
         note.changeStemDirection("down");
         
       }
       
     }
+    
+  }
+  
+  //decides wether to use the normal beam (slanted/flat) or use the type that sits along the bottom/top of the bar if the notes are all over the place
+  pickBeamType(){
     
   }
   
@@ -122,32 +125,75 @@ class Beam {
     let firstNote = $(this.note.noteStemReference).offset();
     let secondNote = $(targetNote.noteStemReference).offset();
     
-    let beamPointingUp = true;
+    let this.beamPointingUp = true;
     
     this.adj = secondNote.left - firstNote.left;
     
     this.opp = firstNote.top - secondNote.top;
     if (this.opp < 0 ){ //if the second note has a lower x axis than the first and the beam needs to point down
       this.opp = Math.abs(this.opp);
-      beamPointingUp = false;
+      this.beamPointingUp = false;
     } //makes the opp a positive number if it is negative
     
     this.hyp = Math.sqrt((this.adj * this.adj) + (this.opp * this.opp));
     
     this.angle = Math.atan(this.opp / this.adj) * 180/Math.PI;
     
-    if (this.angle > 12.8) {
-      this.angle = 12.8;
+    
+    let spaceHeight = $(this.note.barReference).height() / 4; //height of the spaces in a bar/height of a note head. this will be the maxium "height" of a beam
+    
+    //if the slope of the beam is too steep, set it to the max then recalculate the hyp
+    if (this.opp > spaceHeight) {
+      this.angle = Math.atan(spaceHeight / this.adj) * 180/Math.PI;
+      this.hyp = Math.sqrt((this.adj * this.adj) + (spaceHeight * spaceHeight));
+      
+      //if the beam needed to be set to the max angle, then the second stem wont be connected to it, stems need to be shortened/lengthened
+      this.resizeFirstAndLastStems(this.opp - spaceHeight); //this.opp - spaceheight will be the gap between the second note and the stem
+      
     }
     
-    if (beamPointingUp == true){
+    if (this.beamPointingUp == true){
       this.angle = this.angle - this.angle - this.angle; //turns it into a negative number, which makes the beam point up.   
     }
     
 
   }
   
-  private
+  //fixes the length of the first and last stems if the stem angle needed to be readjusted
+  resizeFirstAndLastStems(space){
+    
+    let first = $(this.note.noteHeadReference).offset().top
+    let second = $(this.endNote.noteHeadReference).offset().top
+    
+    //make first note taller
+    if ((this.stemFacingDown && first < second) || (this.stemFacingDown === false &&  first > second) ) {
+      let currentHeight = $(this.note.noteStemReference).height();
+      this.note.setNoteStemCSS(currentHeight + space);
+
+    }
+    //make second note taller
+    else {
+      let currentHeight = $(this.note.noteStemReference).height();
+      this.endNote.setNoteStemCSS(currentHeight + space);
+    }
+    
+  }
+  
+  resizeMiddleNotes(){
+    let firstNote = this.note;
+    
+    for (let i = 0; i < this.middleNotes.length; i++ ){
+      let middleNote = this.middleNotes[i];
+      
+      let opp = $(middleNote.noteStemReference).offset().left - $(firstNote.noteStemReference).offset().left;
+      let adj = opp / Math.tan(this.angle * 180/Math.PI); // opp/tan(angle)
+      
+      if (this.stemFacingDown) {
+        
+      }
+    }
+  }
+  
   
   printBeamContainer(){
     let html = '<div class="beam-container"></div>';
@@ -186,9 +232,10 @@ class Beam {
   
   setBeamCSS(width){
       let beamHeight = 3;
+      let stemWidth = 1;
     
       let css = {"height": beamHeight + "px",
-                 "width": width + "px",
+                 "width": (width + stemWidth) + "px",
                  "background-color":"black",
                 }
               

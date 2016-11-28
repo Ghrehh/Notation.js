@@ -413,7 +413,7 @@ var Beam = (function () {
       this.getMiddleNotes();
     }
 
-    this.sanitizeNotes();
+    this.pickStemDirection();
     this.calculate();
     this.setBeamContainerCSS(this.angle);
     this.setBeamCSS(this.hyp);
@@ -432,15 +432,12 @@ var Beam = (function () {
       } else {
         this.beamedNotes.push(note);
       }
-
-      console.log("running");
-      console.log(note);
     }
   };
 
   //ensures all notes stems are in the same direction before they are beamed
 
-  Beam.prototype.sanitizeNotes = function sanitizeNotes() {
+  Beam.prototype.pickStemDirection = function pickStemDirection() {
 
     //currently, if any note stems face down, make all notes being beamed face down
 
@@ -454,7 +451,7 @@ var Beam = (function () {
     }
 
     if (this.stemFacingDown === false) {
-      for (var i = 0; i < this.beamedNotes.length - 1; i++) {
+      for (var i = 0; i < this.beamedNotes.length; i++) {
         var note = this.beamedNotes[i];
 
         if (note.noteParameters.stemDirection === "down") {
@@ -469,7 +466,7 @@ var Beam = (function () {
       this.note.changeStemDirection("down");
       this.endNote.changeStemDirection("down");
 
-      for (var i = 0; i < this.beamedNotes.length - 1; i++) {
+      for (var i = 0; i < this.beamedNotes.length; i++) {
 
         var note = this.beamedNotes[i];
 
@@ -477,6 +474,10 @@ var Beam = (function () {
       }
     }
   };
+
+  //decides wether to use the normal beam (slanted/flat) or use the type that sits along the bottom/top of the bar if the notes are all over the place
+
+  Beam.prototype.pickBeamType = function pickBeamType() {};
 
   //calculates angles and lengths
 
@@ -504,13 +505,41 @@ var Beam = (function () {
 
     this.angle = Math.atan(this.opp / this.adj) * 180 / Math.PI;
 
-    if (this.angle > 12.8) {
-      this.angle = 12.8;
+    var spaceHeight = $(this.note.barReference).height() / 4; //height of the spaces in a bar/height of a note head. this will be the maxium "height" of a beam
+
+    //if the slope of the beam is too steep, set it to the max then recalculate the hyp
+    if (this.opp > spaceHeight) {
+      this.angle = Math.atan(spaceHeight / this.adj) * 180 / Math.PI;
+      this.hyp = Math.sqrt(this.adj * this.adj + spaceHeight * spaceHeight);
+
+      //if the beam needed to be set to the max angle, then the second stem wont be connected to it, stems need to be shortened/lengthened
+      this.readjustFirstAndLastStems(this.opp - spaceHeight); //this.opp - spaceheight will be the gap between the second note and the stem
     }
 
     if (beamPointingUp == true) {
       this.angle = this.angle - this.angle - this.angle; //turns it into a negative number, which makes the beam point up. 
     }
+  };
+
+  //fixes the length of the first and last stems if the stem angle needed to be readjusted
+
+  Beam.prototype.readjustFirstAndLastStems = function readjustFirstAndLastStems(space) {
+
+    var first = $(this.note.noteHeadReference).offset().top;
+    var second = $(this.endNote.noteHeadReference).offset().top;
+    console.log(first);
+    console.log(second);
+
+    //make first note taller
+    if (this.stemFacingDown && first < second || this.stemFacingDown === false && first > second) {
+      var currentHeight = $(this.note.noteStemReference).height();
+      this.note.setNoteStemCSS(currentHeight + space);
+    }
+    //make second note taller
+    else {
+        var currentHeight = $(this.note.noteStemReference).height();
+        this.endNote.setNoteStemCSS(currentHeight + space);
+      }
   };
 
   Beam.prototype.printBeamContainer = function printBeamContainer() {
@@ -549,9 +578,10 @@ var Beam = (function () {
 
   Beam.prototype.setBeamCSS = function setBeamCSS(width) {
     var beamHeight = 3;
+    var stemWidth = 1;
 
     var css = { "height": beamHeight + "px",
-      "width": width + "px",
+      "width": width + stemWidth + "px",
       "background-color": "black"
     };
 
@@ -1691,8 +1721,10 @@ var Note = (function () {
     $(this.noteStemContainerReference).css(this.getNoteStemContainerCSS());
   };
 
-  Note.prototype.setNoteStemCSS = function setNoteStemCSS() {
-    $(this.noteStemReference).css(this.getNoteStemCSS());
+  //optional height for changes later
+
+  Note.prototype.setNoteStemCSS = function setNoteStemCSS(height) {
+    $(this.noteStemReference).css(this.getNoteStemCSS(height));
   };
 
   Note.prototype.getNoteContainerCSS = function getNoteContainerCSS() {
@@ -1832,10 +1864,15 @@ var Note = (function () {
     };
   };
 
-  Note.prototype.getNoteStemCSS = function getNoteStemCSS() {
+  Note.prototype.getNoteStemCSS = function getNoteStemCSS(height) {
     var noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
     var stemWidth = 1;
     var stemHeight = noteHeadHeight * 3.0;
+
+    if (height !== undefined) {
+      stemHeight = height;
+    }
+
     var left = undefined;
     var bottom = undefined;
 
