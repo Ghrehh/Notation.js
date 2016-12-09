@@ -6,7 +6,7 @@ class Notation {
     this.trebleClefPath = "./media/clef.png";
     this.bassClefPath = "./media/bass.png";
     
-    this.keySignature = "C";
+    this.keySignature = "C"; //default key signature is C, no sharps or flats
     
     this.barHeight = 35; //height of bars and instrument name divs, can be fined when creatign the object but defaults to 35
     if (size !== undefined && typeof(size) === "number" && size > 0){

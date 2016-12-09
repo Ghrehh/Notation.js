@@ -171,7 +171,7 @@ $(document).ready(function(){
   i.bar(1).addNote("G5", "eighth-note")
   i.bar(1).addNote("G5", "eighth-note")
 
-  var note2 = i.bar(1).addNote("C5", "eighth-note");
+  var note2 = i.bar(1).addNote("F5", "eighth-note");
   
   note1.beam.beamTo(note2);
   
