@@ -187,14 +187,11 @@ class Beam {
     
     for (let i = 0; i < this.middleNotes.length; i++ ){
       let middleNote = this.middleNotes[i];
-      console.log("")
-      console.log(middleNote)
-      console.log("firstNote Pos: " + $(firstNote.noteStemReference).offset().left)
-      console.log("middleNote Pos: " + $(middleNote.noteStemReference).offset().left)
+
       
       let opp = $(middleNote.noteStemReference).offset().left - $(firstNote.noteStemReference).offset().left;
       let adj = opp / Math.tan((90 - this.angle) * Math.PI/180); // opp/tan(angle) 90- this.angle because the angle applied to the css is the outside angle, I need the inside. note Math.PI/180 is the opposite of the function used on the one above
-      // console.log(30 / Math.tan(90* 180/Math.PI))
+     
       
       let targetPos; //Position along beam where the middle notes stem needs to be cut/extended to
       let currentPos; //current location of the top/bottom of the middle note
@@ -227,15 +224,7 @@ class Beam {
         middleNote.setNoteStemCSS(currentHeight + (currentPos - targetPos - beamWidth ));
         
       }
-      console.log("currentPos: " + currentPos);
-      console.log("targetPos: " + targetPos);
-      
-      console.log("")
-      console.log("angle: " + (90 - this.angle))
-      console.log("opp: " + opp)
-      console.log("adj: " + adj)
-      console.log("adjustment: " + (currentPos - targetPos))
-
+     
       
       
 

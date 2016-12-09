@@ -8,7 +8,7 @@ class Notation {
     
     this.keySignature = "C"; //default key signature is C, no sharps or flats
     
-    this.barHeight = 35; //height of bars and instrument name divs, can be fined when creatign the object but defaults to 35
+    this.barHeight = 35; //height of bars and instrument name divs, can be defined when creatign the object but defaults to 35
     if (size !== undefined && typeof(size) === "number" && size > 0){
       this.barHeight = size;
     } //if size is a positive int will make barHeight that size;
@@ -111,6 +111,7 @@ class Notation {
     this.removeEmptyBarContainers(); //runs the remove empty bar containers functions to REMOVE EMPTY BARS
   }
   
+  //makes
   setBarsContainerCSS(){
     let width = $(this.container).width() - $("." + this.instrumentNameContainer).width() - this.barHeight * 2; //the clef not loading initially throws off the size of the container, and it's roughly the width of the bar height
     let css = {"display": "inline-block",
@@ -124,79 +125,8 @@ class Notation {
   }
   
   //loops through bars and searches for breakpoints, adds conjoining lines/clefs etc
-  resize(){
-    $(this.container).find(".clef").remove(); //removes all the clefs already on the page
-    $(this.container).find(".conjoining-line-container").remove() //removes all conjoining lines
-    
-    let barContainers = $(this.container + " > ." + this.barsContainer).children(); //all the bar containers
-    
-    for (let i = 0; i < barContainers.length; i++) {
-      let currentBarX = barContainers.eq(i).offset().top;
-      let previousBarX;
-      
-      //sets previous bar if the current bar is not the first
-      if (i > 0) {
-        previousBarX = barContainers.eq(i - 1).offset().top;
-      }
-      
-     
-      //adds the thicker line to the first bar of each line of bars
-      if (currentBarX > previousBarX || previousBarX === undefined) {
-        for (let i2 = 0; i2 < this.instruments.length; i2++) {
-          
-          let instrument = this.instruments[i2];
-          let bar = instrument.bar(i + 1);
-          instrument.bar(i + 1).addClef(); //bars are 1 indexed, not 0;
-          
-          //applies the thicker conjoining line to all bars but the last instrument
-          if(!(instrument.id === this.instruments[this.instruments.length - 1].id)){
-            instrument.bar(i + 1).addConjoiningLine("bold"); //the first line should be bold
-            
-            //if it's not the very first bar, add the end of bar conjoining line to the previous bar
-            if(previousBarX !== undefined){
-              instrument.bar(i).addConjoiningLine("end");
-              
-              let lastBar = instrument.bar(instrument.bars.length) //bars are 1 indexed, not 0, so no need to subtract one
-              
-              if(bar === lastBar){
-                bar.addConjoiningLine("end");
-              }
-            }
-          }
-          
-        }
-      }
-      //adds the other, thinner lines to every other bar
-      else {
-        for (let i2 = 0; i2 < this.instruments.length; i2++) {
-          
-          let instrument = this.instruments[i2];
-          let bar = instrument.bar(i + 1);
-          
-          if(!(instrument.id === this.instruments[this.instruments.length - 1].id)){
-            if (instrument.bar(i + 1) != undefined){ 
-              
-              instrument.bar(i + 1).addConjoiningLine();
-              
-              let lastBar = instrument.bar(instrument.bars.length) //bars are 1 indexed, not 0, so no need to subtract one
-              
-              if(bar === lastBar){
-                bar.addConjoiningLine("end");
-              }
-            }
-          }
-          
-        }
-      }
-      
-      
-    
-      
-      
-    }
-  }
   
-  rtwo(){
+  resize(){
       $(this.container).find(".clef").remove(); //removes all the clefs already on the page
       $(this.container).find(".conjoining-line-container").remove() //removes all conjoining lines
       
@@ -293,6 +223,9 @@ class Notation {
     this.setUpContainer();
     this.addNamesContainer();
     this.addBarsContainer();
+    
+    //starts up functions that deal with resizing/breaking bars
+    this.enableResizeFunctions();
   }
   
   setTitleContainer(){
@@ -372,6 +305,26 @@ class Notation {
         bar.remove();
       }
     }
+  }
+  
+  enableResizeFunctions(){
+    
+      let n = this; //cant use this inside a jquery window function
+      
+      //need to remove this timeout fix after I replace the clef images with SVGs or something
+      setTimeout(function(){
+        n.setBarsContainerCSS();
+        n.resize();
+        
+      }, 1000);
+        
+      
+      $(window).resize(function(){
+        n.setBarsContainerCSS();
+        n.resize();
+        
+      })
+      
   }
   
 

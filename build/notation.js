@@ -548,14 +548,9 @@ var Beam = (function () {
 
     for (var i = 0; i < this.middleNotes.length; i++) {
       var middleNote = this.middleNotes[i];
-      console.log("");
-      console.log(middleNote);
-      console.log("firstNote Pos: " + $(firstNote.noteStemReference).offset().left);
-      console.log("middleNote Pos: " + $(middleNote.noteStemReference).offset().left);
 
       var opp = $(middleNote.noteStemReference).offset().left - $(firstNote.noteStemReference).offset().left;
       var adj = opp / Math.tan((90 - this.angle) * Math.PI / 180); // opp/tan(angle) 90- this.angle because the angle applied to the css is the outside angle, I need the inside. note Math.PI/180 is the opposite of the function used on the one above
-      // console.log(30 / Math.tan(90* 180/Math.PI))
 
       var targetPos = undefined; //Position along beam where the middle notes stem needs to be cut/extended to
       var currentPos = undefined; //current location of the top/bottom of the middle note
@@ -584,14 +579,6 @@ var Beam = (function () {
 
         middleNote.setNoteStemCSS(currentHeight + (currentPos - targetPos - beamWidth));
       }
-      console.log("currentPos: " + currentPos);
-      console.log("targetPos: " + targetPos);
-
-      console.log("");
-      console.log("angle: " + (90 - this.angle));
-      console.log("opp: " + opp);
-      console.log("adj: " + adj);
-      console.log("adjustment: " + (currentPos - targetPos));
     }
   };
 
@@ -1191,9 +1178,9 @@ var Notation = (function () {
     this.trebleClefPath = "./media/clef.png";
     this.bassClefPath = "./media/bass.png";
 
-    this.keySignature = "C";
+    this.keySignature = "C"; //default key signature is C, no sharps or flats
 
-    this.barHeight = 35; //height of bars and instrument name divs, can be fined when creatign the object but defaults to 35
+    this.barHeight = 35; //height of bars and instrument name divs, can be defined when creatign the object but defaults to 35
     if (size !== undefined && typeof size === "number" && size > 0) {
       this.barHeight = size;
     } //if size is a positive int will make barHeight that size;
@@ -1291,6 +1278,8 @@ var Notation = (function () {
     this.removeEmptyBarContainers(); //runs the remove empty bar containers functions to REMOVE EMPTY BARS
   };
 
+  //makes
+
   Notation.prototype.setBarsContainerCSS = function setBarsContainerCSS() {
     var width = $(this.container).width() - $("." + this.instrumentNameContainer).width() - this.barHeight * 2; //the clef not loading initially throws off the size of the container, and it's roughly the width of the bar height
     var css = { "display": "inline-block",
@@ -1306,70 +1295,6 @@ var Notation = (function () {
   //loops through bars and searches for breakpoints, adds conjoining lines/clefs etc
 
   Notation.prototype.resize = function resize() {
-    $(this.container).find(".clef").remove(); //removes all the clefs already on the page
-    $(this.container).find(".conjoining-line-container").remove(); //removes all conjoining lines
-
-    var barContainers = $(this.container + " > ." + this.barsContainer).children(); //all the bar containers
-
-    for (var i = 0; i < barContainers.length; i++) {
-      var currentBarX = barContainers.eq(i).offset().top;
-      var previousBarX = undefined;
-
-      //sets previous bar if the current bar is not the first
-      if (i > 0) {
-        previousBarX = barContainers.eq(i - 1).offset().top;
-      }
-
-      //adds the thicker line to the first bar of each line of bars
-      if (currentBarX > previousBarX || previousBarX === undefined) {
-        for (var i2 = 0; i2 < this.instruments.length; i2++) {
-
-          var instrument = this.instruments[i2];
-          var bar = instrument.bar(i + 1);
-          instrument.bar(i + 1).addClef(); //bars are 1 indexed, not 0;
-
-          //applies the thicker conjoining line to all bars but the last instrument
-          if (!(instrument.id === this.instruments[this.instruments.length - 1].id)) {
-            instrument.bar(i + 1).addConjoiningLine("bold"); //the first line should be bold
-
-            //if it's not the very first bar, add the end of bar conjoining line to the previous bar
-            if (previousBarX !== undefined) {
-              instrument.bar(i).addConjoiningLine("end");
-
-              var lastBar = instrument.bar(instrument.bars.length); //bars are 1 indexed, not 0, so no need to subtract one
-
-              if (bar === lastBar) {
-                bar.addConjoiningLine("end");
-              }
-            }
-          }
-        }
-      }
-      //adds the other, thinner lines to every other bar
-      else {
-          for (var i2 = 0; i2 < this.instruments.length; i2++) {
-
-            var instrument = this.instruments[i2];
-            var bar = instrument.bar(i + 1);
-
-            if (!(instrument.id === this.instruments[this.instruments.length - 1].id)) {
-              if (instrument.bar(i + 1) != undefined) {
-
-                instrument.bar(i + 1).addConjoiningLine();
-
-                var lastBar = instrument.bar(instrument.bars.length); //bars are 1 indexed, not 0, so no need to subtract one
-
-                if (bar === lastBar) {
-                  bar.addConjoiningLine("end");
-                }
-              }
-            }
-          }
-        }
-    }
-  };
-
-  Notation.prototype.rtwo = function rtwo() {
     $(this.container).find(".clef").remove(); //removes all the clefs already on the page
     $(this.container).find(".conjoining-line-container").remove(); //removes all conjoining lines
 
@@ -1453,6 +1378,9 @@ var Notation = (function () {
     this.setUpContainer();
     this.addNamesContainer();
     this.addBarsContainer();
+
+    //starts up functions that deal with resizing/breaking bars
+    this.enableResizeFunctions();
   };
 
   Notation.prototype.setTitleContainer = function setTitleContainer() {
@@ -1525,6 +1453,22 @@ var Notation = (function () {
         bar.remove();
       }
     }
+  };
+
+  Notation.prototype.enableResizeFunctions = function enableResizeFunctions() {
+
+    var n = this; //cant use this inside a jquery window function
+
+    //need to remove this timeout fix after I replace the clef images with SVGs or something
+    setTimeout(function () {
+      n.setBarsContainerCSS();
+      n.resize();
+    }, 1000);
+
+    $(window).resize(function () {
+      n.setBarsContainerCSS();
+      n.resize();
+    });
   };
 
   return Notation;

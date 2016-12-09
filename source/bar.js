@@ -223,9 +223,7 @@ class Bar {
     }
   }
   
-  
-  
-  private
+
   
   //chcecks if a bar container already exists, so multiples do not get added
   checkIfBarContainerExists(){

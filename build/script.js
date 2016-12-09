@@ -176,17 +176,7 @@ $(document).ready(function(){
   note1.beam.beamTo(note2);
   
  
-  
-  setTimeout(function(){
-      n.rtwo();
-      n.setBarsContainerCSS();
-  }, 1000);
-  
-  
-  $(window).resize(function(){
-    n.rtwo();
-    n.setBarsContainerCSS();
-  })
+
   
   
   
