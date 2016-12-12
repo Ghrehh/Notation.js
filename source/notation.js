@@ -214,9 +214,6 @@ class Notation {
     
   }
   
-
-  
-  private
   
   //stuff that is run when the object is created
   initialize(){ 
@@ -325,6 +322,55 @@ class Notation {
         
       })
       
+  }
+  
+  changeBarPadding(val){
+    
+    if (this.instruments.length < 1) {
+      throw "Cannot redraw bar height if there are no instruments ( in Notation.changeBarPadding() )"
+    }
+    
+    this.marginAboveBar = val;
+    this.marginUnderBar = val;
+    
+    //apply new margin to bars
+    let css = {"margin-bottom": String(this.marginUnderBar) + "px",
+              "margin-top": String(this.marginAboveBar) + "px"
+              }
+    
+    
+    $(this.container + " .bar").css(css);
+    
+    
+    //apply the same css to the instrument names, except for the first one which needs the this.barHeight shaved of the top margin to align everything properly
+    let instrumentNames = $(this.container + " .instrument-name");
+    
+    for (let i = 0; i < instrumentNames.length; i++){
+      let instrumentName = instrumentNames.eq(i);
+      if (instrumentName.attr("id") === "0"){
+        instrumentName.css({"margin-bottom": String(this.marginUnderBar) + "px",
+                            "margin-top": String(this.marginAboveBar - this.barHeight) + "px"
+                            })
+      }
+      else {
+        instrumentName.css(css);
+      }
+    }
+    
+    
+    //remove and redraw bar numbers
+    $(this.container + " .number-container").remove();
+    
+    //only need to do it for the first instrument
+    
+    let firstInstrument = this.instruments[0];
+    console.log(firstInstrument)
+    
+    for (let i = 0; i < firstInstrument.bars.length; i++){
+      let bar = firstInstrument.bars[i];
+      bar.addBarNumber();
+    }
+    
   }
   
 

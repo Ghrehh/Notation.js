@@ -100,11 +100,8 @@ class Note {
     this.beam = new Beam(this);
   }
   
-  setBeam(){
-    
-  }
+
   
-  private
   printNoteContainer() {
     let noteContainerHTML = '<div class="' + this.containerClassName +'" id="' + this.noteContainerID +'"></div>';
   

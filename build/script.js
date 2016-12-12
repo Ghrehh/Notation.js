@@ -151,6 +151,8 @@ $(document).ready(function(){
   var i2 =  n.addInstrument("Poland");
   var i4 =  n.addInstrument("Camel");
   
+  n.setTitle("Test Title")
+  n.setTempo("120 BPM")
   
   n.addBar();
   n.addBar();
@@ -173,13 +175,11 @@ $(document).ready(function(){
 
   var note2 = i.bar(1).addNote("F5", "eighth-note");
   
-  note1.beam.beamTo(note2);
+  //note1.beam.beamTo(note2);
   
  
+  
 
-  
-  
-  
 
 
 })

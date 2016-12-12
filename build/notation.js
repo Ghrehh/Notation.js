@@ -28,6 +28,7 @@ var Bar = (function () {
     this.id = id;
     this.notes = [];
     this.reference;
+    this.barContainerReference;
 
     this.keySignature;
     this.timeSignature;
@@ -252,14 +253,14 @@ var Bar = (function () {
 
       if (barContainer.id == this.id) {
         //two equals because it's string to integer, maybe not safe
-        this.reference = barContainer;
+        this.barContainerReference = barContainer;
       }
     }
 
     //declare and append html
     var html = '<div class="number-container">' + '<p class="number">' + (parseInt(this.id) + 1) + '</p>' + '</div>';
 
-    $(this.reference).append(html);
+    $(this.barContainerReference).prepend(html);
 
     //declare and apply css
     var containerCSS = { "height": "0px",
@@ -279,8 +280,8 @@ var Bar = (function () {
       "font-size": fontSize + "px"
     };
 
-    $(this.reference).find(".number-container").css(containerCSS);
-    $(this.reference).find(".number").css(CSS);
+    $(this.barContainerReference).find(".number-container").css(containerCSS);
+    $(this.barContainerReference).find(".number").css(CSS);
   };
 
   Bar.prototype.removeBarsFromContainer = function removeBarsFromContainer(target) {
@@ -1471,6 +1472,50 @@ var Notation = (function () {
     });
   };
 
+  Notation.prototype.changeBarPadding = function changeBarPadding(val) {
+
+    if (this.instruments.length < 1) {
+      throw "Cannot redraw bar height if there are no instruments ( in Notation.changeBarPadding() )";
+    }
+
+    this.marginAboveBar = val;
+    this.marginUnderBar = val;
+
+    //apply new margin to bars
+    var css = { "margin-bottom": String(this.marginUnderBar) + "px",
+      "margin-top": String(this.marginAboveBar) + "px"
+    };
+
+    $(this.container + " .bar").css(css);
+
+    //apply the same css to the instrument names, except for the first one which needs the this.barHeight shaved of the top margin to align everything properly
+    var instrumentNames = $(this.container + " .instrument-name");
+
+    for (var i = 0; i < instrumentNames.length; i++) {
+      var instrumentName = instrumentNames.eq(i);
+      if (instrumentName.attr("id") === "0") {
+        instrumentName.css({ "margin-bottom": String(this.marginUnderBar) + "px",
+          "margin-top": String(this.marginAboveBar - this.barHeight) + "px"
+        });
+      } else {
+        instrumentName.css(css);
+      }
+    }
+
+    //remove and redraw bar numbers
+    $(this.container + " .number-container").remove();
+
+    //only need to do it for the first instrument
+
+    var firstInstrument = this.instruments[0];
+    console.log(firstInstrument);
+
+    for (var i = 0; i < firstInstrument.bars.length; i++) {
+      var bar = firstInstrument.bars[i];
+      bar.addBarNumber();
+    }
+  };
+
   return Notation;
 })();
 
@@ -1585,8 +1630,6 @@ var Note = (function () {
 
     this.beam = new _beam2["default"](this);
   };
-
-  Note.prototype.setBeam = function setBeam() {};
 
   Note.prototype.printNoteContainer = function printNoteContainer() {
     var noteContainerHTML = '<div class="' + this.containerClassName + '" id="' + this.noteContainerID + '"></div>';

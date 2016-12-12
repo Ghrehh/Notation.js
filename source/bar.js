@@ -9,6 +9,7 @@ class Bar {
     this.id = id;
     this.notes = [];
     this.reference;
+    this.barContainerReference;
     
     this.keySignature;
     this.timeSignature;
@@ -259,7 +260,7 @@ class Bar {
       let barContainer = barContainers[i];
       
       if (barContainer.id == this.id) { //two equals because it's string to integer, maybe not safe
-        this.reference = barContainer;
+        this.barContainerReference = barContainer;
       }
     }
     
@@ -268,7 +269,7 @@ class Bar {
                   '<p class="number">' + (parseInt(this.id) + 1) + '</p>' +
                 '</div>'
                 
-    $(this.reference).append(html);
+    $(this.barContainerReference).prepend(html);
     
     
     //declare and apply css
@@ -289,8 +290,8 @@ class Bar {
                "font-size": fontSize + "px",
               }
     
-    $(this.reference).find(".number-container").css(containerCSS);
-    $(this.reference).find(".number").css(CSS);
+    $(this.barContainerReference).find(".number-container").css(containerCSS);
+    $(this.barContainerReference).find(".number").css(CSS);
     
     
   }
