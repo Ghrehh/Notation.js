@@ -1,8 +1,3 @@
-//Need to have a bool for wether the Beam has been "beamed" or not
-//Need a way of having a max slope for the beam
-// if one note beams down, they all beam down
-//need to beam from the bottom of the stem if the notes are beamed down
-
 class Beam {
   constructor(note){
     this.note = note;
@@ -27,6 +22,23 @@ class Beam {
   initialize(){
     this.printBeamContainer();
     this.printBeam();
+    this.unjoinedBeam();
+  }
+  
+  unjoinedBeam(){
+    //current size i'm using for the curved unjoined beams
+    let size = this.note.notation.barHeight / 5;
+    
+    if (this.note.noteParameters.stemDirection === "down") {
+      this.stemFacingDown = true;
+      this.setBeamContainerCSS(0, size * 1.5)
+    }
+    else {
+      this.stemFacingDown = false;
+      this.setBeamContainerCSS(0, size * 1.5)
+    }
+    
+    this.setUnjoinedBeamCSS(size);
   }
   
   beamTo(endNote){
@@ -42,6 +54,8 @@ class Beam {
       this.getMiddleNotes();
     }
     
+    this.checkNotesAreValid();
+    this.removeOldBeamCSS();
     this.pickStemDirection();
     this.calculate();
     this.resizeMiddleNotes();
@@ -49,6 +63,24 @@ class Beam {
     this.setBeamCSS(this.hyp);
     
     
+  }
+  
+  checkNotesAreValid(){
+    let allNotesValid = true;
+    
+  }
+  
+  removeOldBeamCSS(){
+    
+    //remove the unjoined beam CSS from all the beamed notes
+    $(this.reference).removeAttr('style');
+    $(this.endNote.beam.reference).removeAttr('style');
+    
+    for (let i = 0; i < this.middleNotes.length; i++){
+      let middleNoteStem = $(this.middleNotes[i].beam.reference);
+      
+      middleNoteStem.removeAttr('style');
+    }
   }
   
   //if there are more than two notes beamed together, get the notes between the first note and final note and push them in this.middleNotes
@@ -248,9 +280,13 @@ class Beam {
     this.reference = $(this.containerReference).children();
   }
   
-  setBeamContainerCSS(rotate){
+  setBeamContainerCSS(rotate, setBeamHeight){
     let beamHeight = 3;
     let top = "0px";
+    
+    if (setBeamHeight != undefined) {
+      beamHeight = setBeamHeight;
+    }
     
     if (this.stemFacingDown === true){
       let noteStemHeightRaw = $(this.note.noteReference).find(".note-stem").css("height");
@@ -284,6 +320,41 @@ class Beam {
               
     $(this.reference).css(css);
   }
+  
+  //sets CSS for beam "tails" on unjoined 8th notes etc
+  setUnjoinedBeamCSS(size){
+      if (size === undefined){
+        throw "in beam.setUnjoinedBeamCSS() you must set a size"
+      }
+      else if (typeof size !== "number" && size > 0){
+        throw "in beam.setUnjoinedBeamCSS the value provided must be a number greater than 0"
+      }
+      let beamWidth = 1;
+      
+      let css;
+      
+      if (this.stemFacingDown === true){
+        css = {"height": size * 1.5,
+                   "width": size,
+                   "background-color":"transparent",
+                   "border-bottom": (beamWidth * 2) + "px solid black",
+                   "border-right": beamWidth + "px solid black",
+                   "border-radius": "0px 0px " + size + "px"
+                  }
+       }
+       else {
+        css = {"height": size * 1.5,
+                   "width": size,
+                   "background-color":"transparent",
+                   "border-top": (beamWidth * 2) + "px solid black",
+                   "border-right": beamWidth + "px solid black",
+                   "border-radius": "0px " + size + "px 0px"
+                  }
+       }
+              
+    $(this.reference).css(css);
+  }
+  
   
   
   

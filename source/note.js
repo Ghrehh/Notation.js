@@ -3,6 +3,7 @@ import Beam from "./beam";
 class Note {
   constructor(bar, pitch, duration, parentNote){
     this.bar = bar;
+    this.notation = this.bar.instrument.notation;
     this.beam;
    
     
@@ -97,7 +98,14 @@ class Note {
       this.setNoteStemCSS();
     }
     
-    this.beam = new Beam(this);
+    
+    if (this.duration !== "whole-note" && this.duration !== "half-note" && this.duration !== "quarter-note") {
+      this.beam = new Beam(this);
+      console.log("making beam");
+    }
+    else {
+      console.log("no beam")
+    }
   }
   
 
