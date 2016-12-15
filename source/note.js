@@ -62,7 +62,7 @@ class Note {
       this.noteContainerReference = this.parentNote.noteContainerReference;
     }
     
-    //the container for the note head, there may be many in each note-container
+    //the container for the note head, there may be many in each note-container dfg
     this.noteID = this.getNoteID();
     this.printNote();
     this.setNoteReference();
