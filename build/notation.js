@@ -402,13 +402,15 @@ var Beam = (function () {
   Beam.prototype.unjoinedBeam = function unjoinedBeam() {
     //current size i'm using for the curved unjoined beams
     var size = this.note.notation.barHeight / 5;
-
+    console.log(size);
     if (this.note.noteParameters.stemDirection === "down") {
       this.stemFacingDown = true;
-      this.setBeamContainerCSS(0, size * 1.5);
+      //no rotation, size of unjoined stem, the top/bottom offset on said stem
+      this.setBeamContainerCSS(0, size * 1.5, size / 1.5);
     } else {
       this.stemFacingDown = false;
-      this.setBeamContainerCSS(0, size * 1.5);
+      //no rotation, size of unjoined stem, the top/bottom offset on said stem
+      this.setBeamContainerCSS(0, size * 1.5, size / 1.5);
     }
 
     this.setUnjoinedBeamCSS(size);
@@ -627,18 +629,34 @@ var Beam = (function () {
     this.reference = $(this.containerReference).children();
   };
 
-  Beam.prototype.setBeamContainerCSS = function setBeamContainerCSS(rotate, setBeamHeight) {
+  Beam.prototype.setBeamContainerCSS = function setBeamContainerCSS(rotate, setBeamHeight, setBeamOffset) {
+    //setBeamHeight for unjoined beams, setBeamOffset for unjoined beams also
     var beamHeight = 3;
-    var top = "0px";
+    var beamOffset = 0;
+    var top = 0;
 
     if (setBeamHeight != undefined) {
+      if (typeof setBeamHeight != "number" || setBeamHeight < 1) {
+        throw "in beam.setBeamContainerCSS() setBeamHeight must be a number over 0";
+      }
       beamHeight = setBeamHeight;
+    }
+
+    if (setBeamOffset != undefined) {
+      if (typeof setBeamOffset != "number") {
+        throw "in beam.setBeamContainerCSS() setBeamOffset must be a number";
+      }
+      beamOffset = setBeamOffset;
     }
 
     if (this.stemFacingDown === true) {
       var noteStemHeightRaw = $(this.note.noteReference).find(".note-stem").css("height");
       var noteStemHeightInt = parseInt($(this.note.noteReference).find(".note-stem").css("height").substr(0, noteStemHeightRaw.length - 2)); //shaves of the "px"
-      top = noteStemHeightInt - beamHeight;
+      top = noteStemHeightInt - beamHeight - beamOffset;
+    } else {
+      //width of the unjoined beam at it's thickest, should pull this form somewhere else when I'm calculating the width programatically
+      var unjoinedBeamWidth = 2;
+      top = top + beamOffset - unjoinedBeamWidth;
     }
 
     if (this.beamPointingUp == true) {
@@ -1661,7 +1679,7 @@ var Note = (function () {
       this.noteContainerReference = this.parentNote.noteContainerReference;
     }
 
-    //the container for the note head, there may be many in each note-container
+    //the container for the note head, there may be many in each note-container dfg
     this.noteID = this.getNoteID();
     this.printNote();
     this.setNoteReference();
@@ -1906,6 +1924,9 @@ var Note = (function () {
 
     var background = undefined;
 
+    //tweaks positioning of note head slightly
+    var noteHeadPadding = noteHeadHeight / 8;
+
     if (this.duration === "whole-note" || this.duration === "half-note") {
       background = "transparent";
     } else {
@@ -1913,8 +1934,8 @@ var Note = (function () {
     }
 
     return {
-      "height": noteHeadHeight + "px",
-      "width": noteHeadHeight * 1.25 + "px",
+      "height": noteHeadHeight * 0.71 + "px",
+      "width": noteHeadHeight * 1.02 + "px",
       "box-sizing": "border-box",
       "border": "2px solid black",
       "border-width": "2px 1px",
@@ -1922,7 +1943,7 @@ var Note = (function () {
       "transform": "rotate(-15deg)",
       "margin": "auto",
       "position": "relative",
-      "top": "" + noteHeadHeight * this.noteParameters.topOffset + "px",
+      "top": "" + (noteHeadHeight * this.noteParameters.topOffset + noteHeadPadding) + "px",
       "background-color": background
 
     };
@@ -1984,7 +2005,7 @@ var Note = (function () {
   Note.prototype.getNoteStemCSS = function getNoteStemCSS(height) {
     var noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
     var stemWidth = 1;
-    var stemHeight = noteHeadHeight * 3.0;
+    var stemHeight = noteHeadHeight * 2.6;
 
     if (height !== undefined) {
       stemHeight = height;
@@ -1994,8 +2015,8 @@ var Note = (function () {
     var bottom = undefined;
 
     if (this.noteParameters.stemDirection === "up") {
-      left = noteHeadHeight * 1.25 - stemWidth - 1; // the addiontal minus 1 just seems to do the trick
-      bottom = stemHeight - noteHeadHeight / 2.60;
+      left = noteHeadHeight * 1.05 - stemWidth - 1; // the addiontal minus 1 just seems to do the trick
+      bottom = stemHeight;
     } else if (this.noteParameters.stemDirection === "down") {
       left = 0;
       bottom = 0;

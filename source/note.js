@@ -322,6 +322,9 @@ class Note {
     
     let background;
     
+    //tweaks positioning of note head slightly
+    let noteHeadPadding = noteHeadHeight / 8;
+    
     if (this.duration === "whole-note" || this.duration === "half-note"){
       background = "transparent";
     }
@@ -330,8 +333,8 @@ class Note {
     }
     
     return {
-      "height": noteHeadHeight + "px",
-      "width": (noteHeadHeight * 1.25)  + "px",
+      "height": (noteHeadHeight * 0.71) + "px",
+      "width": (noteHeadHeight * 1.02)  + "px",
       "box-sizing": "border-box",
       "border" : "2px solid black",
       "border-width": "2px 1px",
@@ -339,7 +342,7 @@ class Note {
       "transform":"rotate(-15deg)",
       "margin":"auto",
       "position":"relative",
-      "top": "" + (noteHeadHeight * this.noteParameters.topOffset) + "px",
+      "top": "" + ((noteHeadHeight * this.noteParameters.topOffset) + noteHeadPadding) + "px",
       "background-color": background,
       
     }
@@ -403,7 +406,7 @@ class Note {
   getNoteStemCSS(height){
     let noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
     let stemWidth = 1;
-    let stemHeight = noteHeadHeight * 3.0;
+    let stemHeight = noteHeadHeight * 2.6;
 
     if (height !== undefined){
       stemHeight = height
@@ -413,8 +416,8 @@ class Note {
     let bottom;
     
     if (this.noteParameters.stemDirection === "up") {
-      left = (noteHeadHeight * 1.25) - stemWidth - 1; // the addiontal minus 1 just seems to do the trick
-      bottom = stemHeight - (noteHeadHeight / 2.60);
+      left = (noteHeadHeight * 1.05) - stemWidth - 1; // the addiontal minus 1 just seems to do the trick
+      bottom = stemHeight ;
     }
     else if (this.noteParameters.stemDirection === "down") {
       left = 0;

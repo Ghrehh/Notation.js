@@ -28,14 +28,16 @@ class Beam {
   unjoinedBeam(){
     //current size i'm using for the curved unjoined beams
     let size = this.note.notation.barHeight / 5;
-    
+    console.log(size)
     if (this.note.noteParameters.stemDirection === "down") {
       this.stemFacingDown = true;
-      this.setBeamContainerCSS(0, size * 1.5)
+      //no rotation, size of unjoined stem, the top/bottom offset on said stem
+      this.setBeamContainerCSS(0, size * 1.5, size / 1.5)
     }
     else {
       this.stemFacingDown = false;
-      this.setBeamContainerCSS(0, size * 1.5)
+      //no rotation, size of unjoined stem, the top/bottom offset on said stem
+      this.setBeamContainerCSS(0, size * 1.5, size / 1.5)
     }
     
     this.setUnjoinedBeamCSS(size);
@@ -280,19 +282,36 @@ class Beam {
     this.reference = $(this.containerReference).children();
   }
   
-  setBeamContainerCSS(rotate, setBeamHeight){
+  setBeamContainerCSS(rotate, setBeamHeight, setBeamOffset){
+    //setBeamHeight for unjoined beams, setBeamOffset for unjoined beams also
     let beamHeight = 3;
-    let top = "0px";
+    let beamOffset = 0;
+    let top = 0;
     
     if (setBeamHeight != undefined) {
+      if (typeof setBeamHeight != "number" || setBeamHeight < 1) {
+        throw "in beam.setBeamContainerCSS() setBeamHeight must be a number over 0";
+      }
       beamHeight = setBeamHeight;
+    }
+    
+    if (setBeamOffset != undefined) {
+     if (typeof setBeamOffset != "number" ) {
+        throw "in beam.setBeamContainerCSS() setBeamOffset must be a number";
+      }
+      beamOffset = setBeamOffset
     }
     
     if (this.stemFacingDown === true){
       let noteStemHeightRaw = $(this.note.noteReference).find(".note-stem").css("height");
       let noteStemHeightInt = parseInt($(this.note.noteReference).find(".note-stem").css("height").substr(0, noteStemHeightRaw.length - 2)); //shaves of the "px"
-      top = noteStemHeightInt - beamHeight;
+      top = noteStemHeightInt - beamHeight - beamOffset;
 
+    }
+    else {
+      //width of the unjoined beam at it's thickest, should pull this form somewhere else when I'm calculating the width programatically
+      let unjoinedBeamWidth = 2;
+      top = top + beamOffset - unjoinedBeamWidth ;
     }
     
     if (this.beamPointingUp == true){
@@ -303,7 +322,7 @@ class Beam {
                "width":"0px",
                "transform":"rotate(" + rotate + "deg)",
                "position": "relative",
-                "top": top + "px",
+               "top": top + "px",
               }
               
     $(this.containerReference).css(css);
