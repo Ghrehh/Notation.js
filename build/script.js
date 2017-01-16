@@ -11,8 +11,8 @@ $(document).ready(function(){
   n.addBar();
   n.addBar();
   n.addBar();
-  i.bar(1).addNote("B3", "whole-note");
-  i.bar(1).addNote("C4", "half-note");
+  i.bar(1).addNote("B3", "whole");
+  i.bar(1).addNote("C4", "half");
   i.bar(1).addNote("D4");
   i.bar(1).addNote("E4");
   i.bar(1).addNote("F4");
@@ -47,57 +47,57 @@ $(document).ready(function(){
   i3.bar(1).addNote("B5");
   i3.bar(1).addNote("C6");
   
-  i2.bar(1).addNote("B3", "whole-note")
+  i2.bar(1).addNote("B3", "whole")
   
-  i2.bar(1).addNote("B3", "half-note")
-  i2.bar(1).addNote("B3", "half-note")
+  i2.bar(1).addNote("B3", "half")
+  i2.bar(1).addNote("B3", "half")
   
-  i2.bar(1).addNote("B3", "quarter-note")
-  i2.bar(1).addNote("B3", "quarter-note")
-  i2.bar(1).addNote("B3", "quarter-note")
-  i2.bar(1).addNote("B3", "quarter-note")
+  i2.bar(1).addNote("B3", "quarter")
+  i2.bar(1).addNote("B3", "quarter")
+  i2.bar(1).addNote("B3", "quarter")
+  i2.bar(1).addNote("B3", "quarter")
   
-  i2.bar(1).addNote("B3", "eighth-note")
-  i2.bar(1).addNote("B3", "eighth-note")
-  i2.bar(1).addNote("B3", "eighth-note")
-  i2.bar(1).addNote("B3", "eighth-note")
-  i2.bar(1).addNote("B3", "eighth-note")
-  i2.bar(1).addNote("B3", "eighth-note")
-  i2.bar(1).addNote("B3", "eighth-note")
-  i2.bar(1).addNote("B3", "eighth-note")
+  i2.bar(1).addNote("B3", "eighth")
+  i2.bar(1).addNote("B3", "eighth")
+  i2.bar(1).addNote("B3", "eighth")
+  i2.bar(1).addNote("B3", "eighth")
+  i2.bar(1).addNote("B3", "eighth")
+  i2.bar(1).addNote("B3", "eighth")
+  i2.bar(1).addNote("B3", "eighth")
+  i2.bar(1).addNote("B3", "eighth")
   
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
-  i4.bar(1).addNote("B3", "sixteenth-note")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
+  i4.bar(1).addNote("B3", "sixteenth")
   
-  i4.bar(1).addNote("B3", "thirty-second-note")
-  i4.bar(1).addNote("B3", "thirty-second-note")
-  i4.bar(1).addNote("B3", "thirty-second-note")
-  i4.bar(1).addNote("B3", "thirty-second-note")
-  i4.bar(1).addNote("B3", "thirty-second-note")
-  i4.bar(1).addNote("B3", "thirty-second-note")
-  i4.bar(1).addNote("B3", "thirty-second-note")
-  i4.bar(1).addNote("B3", "thirty-second-note")
+  i4.bar(1).addNote("B3", "thirty-second")
+  i4.bar(1).addNote("B3", "thirty-second")
+  i4.bar(1).addNote("B3", "thirty-second")
+  i4.bar(1).addNote("B3", "thirty-second")
+  i4.bar(1).addNote("B3", "thirty-second")
+  i4.bar(1).addNote("B3", "thirty-second")
+  i4.bar(1).addNote("B3", "thirty-second")
+  i4.bar(1).addNote("B3", "thirty-second")
   
 
   
   let bar = i.addBar();
   let note = bar.addNote("C5");
   
-  bar.addNote("E5", "half-note", bar.note(1));
+  bar.addNote("E5", "half", bar.note(1));
   
   
   i3.bar(3).addNote("F4");
@@ -144,7 +144,7 @@ $(document).ready(function(){
   n.setTitle("Test Title")
   n.setTempo("120 BPM")*/
   
-  var n = new Notation(".container");
+  var n = new Notation(".container", 35);
   
   var i =  n.addInstrument("Guitar 1", "bass");
   var i3 =  n.addInstrument("Guitar 2");
@@ -158,28 +158,25 @@ $(document).ready(function(){
   n.addBar();
   n.addBar();
   n.addBar();
-  var note1 = i.bar(1).addNote("F4", "eighth-note");
-  i.bar(1).addNote("F4", "eighth-note")
-  i.bar(1).addNote("G4", "eighth-note")
-  i.bar(1).addNote("G4", "eighth-note")
-  i.bar(1).addNote("G4", "eighth-note")
-  i.bar(1).addNote("G4", "eighth-note")
-  var note2 = i.bar(1).addNote("F4", "eighth-note");
+  var note1 = i.bar(1).addNote("F4", "thirty-second");
+  i.bar(1).addNote("F4", "sixteenth")
+  i.bar(1).addNote("G4", "thirty-second")
+  i.bar(1).addNote("G4", "sixty-fourth")
+  i.bar(1).addNote("G4", "eighth")
+  i.bar(1).addNote("G4", "eighth")
+  var note2 = i.bar(1).addNote("D4", "eighth");
+  
+  note1.beam.beamTo(note2);
+  
+  var note1 = i.bar(1).addNote("F5", "sixty-fourth");
+  i.bar(1).addNote("G5", "sixteenth")
+  i.bar(1).addNote("G5", "sixty-fourth")
+  i.bar(1).addNote("G5", "sixty-fourth")
+
+  var note2 = i.bar(1).addNote("F5", "sixty-fourth");
   
   //note1.beam.beamTo(note2);
   
-  var note1 = i.bar(1).addNote("C5", "eighth-note");
-  i.bar(1).addNote("G5", "eighth-note")
-  i.bar(1).addNote("G5", "eighth-note")
-  i.bar(1).addNote("G5", "eighth-note")
-
-  var note2 = i.bar(1).addNote("F5", "eighth-note");
-  
-  //note1.beam.beamTo(note2);
-  
- 
-  
-
 
 
 })

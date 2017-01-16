@@ -2,14 +2,15 @@ class Beam {
   constructor(note){
     this.note = note;
     
-    this.containerReference;
-    this.reference;
+    this.containerReferences = [];
+    this.references = [];
     
     this.endNote;
     this.middleNotes = []; //array of any additional notes to be beamed between the first and last
     
     this.beamPointingUp;
     this.stemFacingDown;
+    
     
     this.adj;
     this.opp;
@@ -23,24 +24,6 @@ class Beam {
     this.printBeamContainer();
     this.printBeam();
     this.unjoinedBeam();
-  }
-  
-  unjoinedBeam(){
-    //current size i'm using for the curved unjoined beams
-    let size = this.note.notation.barHeight / 5;
-    console.log(size)
-    if (this.note.noteParameters.stemDirection === "down") {
-      this.stemFacingDown = true;
-      //no rotation, size of unjoined stem, the top/bottom offset on said stem
-      this.setBeamContainerCSS(0, size * 1.5, size / 1.5)
-    }
-    else {
-      this.stemFacingDown = false;
-      //no rotation, size of unjoined stem, the top/bottom offset on said stem
-      this.setBeamContainerCSS(0, size * 1.5, size / 1.5)
-    }
-    
-    this.setUnjoinedBeamCSS(size);
   }
   
   beamTo(endNote){
@@ -57,33 +40,199 @@ class Beam {
     }
     
     this.checkNotesAreValid();
-    this.removeOldBeamCSS();
+    this.removeBeamCSS();
     this.pickStemDirection();
     this.calculate();
     this.resizeMiddleNotes();
-    this.setBeamContainerCSS(this.angle);
-    this.setBeamCSS(this.hyp);
     
+    this.applyFirstNoteBeams(); //do first one seperates since it cant beam backwards? might be best to meld this in the the next method
+    this.sortNoteBeams();
     
   }
+  
+  unjoinedBeam(){
+    //current size i'm using for the curved unjoined beams
+    let size = this.note.notation.barHeight / 5;
+    if (this.note.noteParameters.stemDirection === "down") {
+      this.stemFacingDown = true;
+    }
+    else {
+      this.stemFacingDown = false;
+    }
+    //no rotation, size of unjoined beam, the top/bottom offset beam, whether or not it is an unjoined beam
+    
+    for (let i = 0; i < this.containerReferences.length; i++) {
+      let container = this.containerReferences[i];
+      let stem = this.references[i];
+      
+      let additionalOffset = (size / 2) * i;
+      $(container).css(this.getBeamContainerCSS(0, size * 1, size / 1.5 + additionalOffset, true));
+      $(stem).css(this.getUnjoinedBeamCSS(size));
+    }
+
+  }
+  
+
+  
+  applyFirstNoteBeams(){
+    //Apply the main beam that stretches across all the notes in the grouping, these values are calculated in the calculate() function
+    $(this.containerReferences[0]).css(this.getBeamContainerCSS(this.angle));
+    $(this.references[0]).css(this.getBeamCSS(this.hyp));
+    
+    //then calculate the beam between the first and second note (which may be different if the grouping is more than two notes)
+    let nextNote;
+    
+    if (this.middleNotes.length === 0){
+      nextNote = this.endNote;
+    }
+    else {
+      nextNote = this.middleNotes[0];
+    }
+    
+    let offset = this.note.notation.barHeight / 10;
+    let lowerBeamHeight = 2;
+    
+    //adds some additional padding to the 16th note beam on beams that are above notes
+    let topBeamHeightFix = 0;
+    if (this.stemFacingDown === false) {
+      topBeamHeightFix = 2;
+    }
+    
+    let stem = $(this.note.noteStemReference);
+    let nextStem = $(nextNote.noteStemReference);
+    
+    let opp = nextStem.offset().left - stem.offset().left;
+    let adj;
+    
+    if (this.stemFacingDown) {
+      adj = (nextStem.offset().top + nextStem.height()) - (stem.offset().top + stem.height());
+      
+    }
+    else {
+      adj = nextStem.offset().top - stem.offset().top;
+    }
+    
+    let hyp = Math.sqrt((adj * adj) + (opp * opp));
+    
+    //get any other beams from the root note, minus the first, hence index starts at 1 not 0
+    for (let i = 1; i < this.references.length; i++){
+      let container = $(this.containerReferences[i]);
+      let beam = $(this.references[i]);
+      
+      let width;
+      
+      if (nextNote.beam.containerReferences.length > i) {
+        width = hyp;
+      }
+      else {
+        width = hyp / 4;
+      }
+      //rotation, size of unjoined beam, the top/bottom offset beam, whether or not it is an unjoined beam
+      container.css(this.getBeamContainerCSS(this.angle, undefined, topBeamHeightFix + (offset * i), false));
+      beam.css(this.getBeamCSS(width, lowerBeamHeight));
+
+    }
+
+  }
+  
+  sortNoteBeams(){
+
+    let fullArray = this.middleNotes; fullArray.push(this.endNote); fullArray.unshift(this.note);
+    
+    for (let i = 1; i < fullArray.length; i++){
+      let prevNote = fullArray[i - 1];
+      let currNote = fullArray[i];
+      let nextNote = fullArray[i + 1];
+      
+      let prevNoteBeams = prevNote.beam.references;
+      let currNoteBeams = currNote.beam.references;
+      let nextNoteBeams = nextNote ? nextNote.beam.references : undefined;
+      
+      let prevNoteStem = prevNote.noteStemReference;
+      let currNoteStem = currNote.noteStemReference;
+      let nextNoteStem = nextNote ? nextNote.noteStemReference : undefined;
+      
+      ///if the final note
+      
+      let beam_back = false;
+      let beam_all_forward = false;
+      let beam_shared_forward = false;
+      
+      if (nextNote === undefined){
+        //beam EVERYTHING BACK
+        //beam NOTHING FORWARD
+        beam_back = true
+        beam_all_forward = false
+        beam_shared_forward = false
+      }
+      else if (currNoteBeams.length >= nextNoteBeams.length) {
+        //beam EVERYTHING BACK
+        //beam anything the next note has forward
+        beam_back = true
+        beam_all_forward = false
+        beam_shared_forward = true
+      }
+      else if(currNoteBeams.length < nextNoteBeams.length) {
+        //beam NOTHING back
+        //beam everything forward
+        beam_back = false
+        beam_all_forward = true
+        beam_shared_forward = false
+      }
+      
+
+      
+      for (let i2 = 1; i2 < currNoteBeams.length; i2++){
+        let nextContainer = nextNote.beam.containerReferences[i2] || undefined;
+        
+        let container = currNote.beam.containerReferences[i2];
+        let beam = currNote.beam.references[i2];
+
+        
+        let opp = nextNoteStem.offset().left - currNoteStem.offset().left;
+        let adj;
+    
+        if (this.stemFacingDown) {
+          adj = (nextNoteStem.offset().top + nextNoteStem.height()) - (currNoteStem.offset().top + currNoteStem.height());
+          
+        }
+        else {
+          adj = nextNoteStem.offset().top - currNoteStem.offset().top;
+        }
+        
+        let hyp = Math.sqrt((adj * adj) + (opp * opp));
+        
+        
+        if (nextContainer){
+          
+        }
+      }
+    }
+  }
+  
+  
+  
+  
   
   checkNotesAreValid(){
     let allNotesValid = true;
     
   }
   
-  removeOldBeamCSS(){
+  //removes the css from unjoined beams before joining
+  removeBeamCSS(){
     
     //remove the unjoined beam CSS from all the beamed notes
-    $(this.reference).removeAttr('style');
-    $(this.endNote.beam.reference).removeAttr('style');
+    $(this.note.noteReference).find(".beam").removeAttr('style');
+    $(this.endNote.noteReference).find(".beam").removeAttr('style');
     
     for (let i = 0; i < this.middleNotes.length; i++){
-      let middleNoteStem = $(this.middleNotes[i].beam.reference);
+      let middleNote = $(this.middleNotes[i].noteReference).find(".beam");
       
-      middleNoteStem.removeAttr('style');
+      middleNote.removeAttr('style');
     }
   }
+  
   
   //if there are more than two notes beamed together, get the notes between the first note and final note and push them in this.middleNotes
   getMiddleNotes(){
@@ -150,7 +299,7 @@ class Beam {
   }
   
   
-  //calculates angles and lengths
+  //calculates angles and lengths of main beam between first and last
   calculate(){
     let targetNote = this.endNote;
     if (targetNote === undefined){
@@ -193,6 +342,8 @@ class Beam {
     
 
   }
+  
+  
   
   //fixes the length of the first and last stems if the stem angle needed to be readjusted
   resizeFirstAndLastStems(space){
@@ -268,21 +419,48 @@ class Beam {
   }
   
   
+  
+  
   printBeamContainer(){
-    let html = '<div class="beam-container"></div>';
+    let numberOfContainers = 1;
     
-    $(this.note.noteStemReference).append(html);
-    this.containerReference = $(this.note.noteStemReference).children();
+       switch(this.note.duration){
+          case "eighth":
+            numberOfContainers = 1;
+            break;
+          case "sixteenth":
+            numberOfContainers = 2;
+            break;
+          case "thirty-second":
+            numberOfContainers = 3;
+            break;
+          case "sixty-fourth":
+            numberOfContainers = 4;
+            break;
+        }
+    
+    
+    for (let i = 0; i < numberOfContainers; i ++) {
+      let html = '<div class="beam-container"></div>';
+      
+      $(this.note.noteStemReference).prepend(html);
+      this.containerReferences.push($(this.note.noteStemReference).children().eq(0));
+    }
   }
   
   printBeam(){
-    let html = '<div class="beam"></div>'
     
-    $(this.containerReference).append(html);
-    this.reference = $(this.containerReference).children();
+    for (let i = 0; i < this.containerReferences.length; i++){
+      let html = '<div class="beam"></div>'
+      let containerReference = this.containerReferences[i];
+      $(containerReference).append(html);
+      this.references.push($(containerReference).children());
+    }
   }
   
-  setBeamContainerCSS(rotate, setBeamHeight, setBeamOffset){
+  
+  
+  getBeamContainerCSS(rotate, setBeamHeight, setBeamOffset, isUnjoinedBeam){
     //setBeamHeight for unjoined beams, setBeamOffset for unjoined beams also
     let beamHeight = 3;
     let beamOffset = 0;
@@ -310,7 +488,11 @@ class Beam {
     }
     else {
       //width of the unjoined beam at it's thickest, should pull this form somewhere else when I'm calculating the width programatically
-      let unjoinedBeamWidth = 2;
+      let unjoinedBeamWidth = 0; //shouldn't be applied to beams that arent providing the setBeamOffset attribute, as they are not unjoined
+      if (isUnjoinedBeam === true ) {
+        unjoinedBeamWidth = 2;
+      }
+      
       top = top + beamOffset - unjoinedBeamWidth ;
     }
     
@@ -324,54 +506,72 @@ class Beam {
                "position": "relative",
                "top": top + "px",
               }
-              
-    $(this.containerReference).css(css);
+    
+    return css;          
   }
   
-  setBeamCSS(width){
+  getBeamCSS(width, height, moveRight){
       let beamHeight = 3;
       let stemWidth = 1;
+      let right = 0;
+      
+      if (height !== undefined){
+        if (typeof height !== "number" || height < 0) {
+          throw "in beam.getBeamCSS(): height provided was not a number greater than 0";
+        }
+        beamHeight = height;
+      }
+      
+      if (moveRight !== undefined){
+        if (typeof moveRight !== "number" ) {
+          throw "in beam.getBeamCSS(): moveRight provided was not a number";
+        }
+        right = moveRight;
+      }
     
       let css = {"height": beamHeight + "px",
                  "width": (width + stemWidth) + "px",
                  "background-color":"black",
+                 "position": "relative",
+                 "right": right,
                 }
-              
-    $(this.reference).css(css);
+    
+    return css;      
+    //$(this.reference).css(css);
   }
   
   //sets CSS for beam "tails" on unjoined 8th notes etc
-  setUnjoinedBeamCSS(size){
-      if (size === undefined){
-        throw "in beam.setUnjoinedBeamCSS() you must set a size"
-      }
-      else if (typeof size !== "number" && size > 0){
-        throw "in beam.setUnjoinedBeamCSS the value provided must be a number greater than 0"
-      }
-      let beamWidth = 1;
-      
-      let css;
-      
-      if (this.stemFacingDown === true){
-        css = {"height": size * 1.5,
-                   "width": size,
-                   "background-color":"transparent",
-                   "border-bottom": (beamWidth * 2) + "px solid black",
-                   "border-right": beamWidth + "px solid black",
-                   "border-radius": "0px 0px " + size + "px"
-                  }
-       }
-       else {
-        css = {"height": size * 1.5,
-                   "width": size,
-                   "background-color":"transparent",
-                   "border-top": (beamWidth * 2) + "px solid black",
-                   "border-right": beamWidth + "px solid black",
-                   "border-radius": "0px " + size + "px 0px"
-                  }
-       }
-              
-    $(this.reference).css(css);
+  getUnjoinedBeamCSS(size){
+    if (size === undefined){
+      throw "in beam.setUnjoinedBeamCSS() you must set a size"
+    }
+    else if (typeof size !== "number" && size > 0){
+      throw "in beam.setUnjoinedBeamCSS the value provided must be a number greater than 0"
+    }
+    let beamWidth = 1;
+    
+    let css;
+    
+    if (this.stemFacingDown === true){
+      css = {"height": size * 1,
+                 "width": size,
+                 "background-color":"transparent",
+                 "border-bottom": (beamWidth * 2) + "px solid black",
+                 "border-right": beamWidth + "px solid black",
+                 "border-radius": "0px 0px " + size + "px"
+                }
+     }
+     else {
+      css = {"height": size * 1,
+                 "width": size,
+                 "background-color":"transparent",
+                 "border-top": (beamWidth * 2) + "px solid black",
+                 "border-right": beamWidth + "px solid black",
+                 "border-radius": "0px " + size + "px 0px"
+                }
+     }
+            
+    return css;
   }
   
   

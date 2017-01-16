@@ -101,11 +101,8 @@ class Note {
     
     if (this.duration !== "whole-note" && this.duration !== "half-note" && this.duration !== "quarter-note") {
       this.beam = new Beam(this);
-      console.log("making beam");
     }
-    else {
-      console.log("no beam")
-    }
+
   }
   
 
@@ -273,23 +270,26 @@ class Note {
     let widthMultiplier;
     
     switch(this.duration){
-      case "whole-note":
+      case "whole":
         widthMultiplier = 2;
         break;
-      case "half-note":
+      case "half":
         widthMultiplier = 1.3;
         break;
-      case "quarter-note":
+      case "quarter":
         widthMultiplier = 1.1;
         break;
-      case "eighth-note":
+      case "eighth":
         widthMultiplier = 0.90;
         break;
-      case "sixteenth-note":
+      case "sixteenth":
         widthMultiplier = 0.70;
         break;
-      case "thirty-second-note":
+      case "thirty-second":
         widthMultiplier = 0.60;
+        break;
+      case "sixty-fourth":
+        widthMultiplier = 0.50;
         break;
     }
 
@@ -406,7 +406,7 @@ class Note {
   getNoteStemCSS(height){
     let noteHeadHeight = $(this.barReference).height() / 4; //same as the distance between lines
     let stemWidth = 1;
-    let stemHeight = noteHeadHeight * 2.6;
+    let stemHeight = noteHeadHeight * 3;
 
     if (height !== undefined){
       stemHeight = height
