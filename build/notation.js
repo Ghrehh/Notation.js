@@ -513,12 +513,19 @@ var Beam = (function () {
       var currNoteStem = currNote.noteStemReference;
       var nextNoteStem = nextNote ? nextNote.noteStemReference : undefined;
 
-      ///if the final note
+      var offset = this.note.notation.barHeight / 10;
+      var lowerBeamHeight = 2;
+
+      var topBeamHeightFix = 0;
+      if (this.stemFacingDown === false) {
+        topBeamHeightFix = 2;
+      }
 
       var beam_back = false;
       var beam_all_forward = false;
       var beam_shared_forward = false;
 
+      ///if the final note
       if (nextNote === undefined) {
         //beam EVERYTHING BACK
         //beam NOTHING FORWARD
@@ -556,7 +563,25 @@ var Beam = (function () {
 
         var hyp = Math.sqrt(adj * adj + opp * opp);
 
-        if (nextContainer) {}
+        var angle = nextNote ? this.angle : this.angle + 180;
+
+        var width = 0;
+        var right = 0;
+
+        if (beam_shared_forward && nextContainer) {
+          width += hyp;
+        }
+
+        if (beam_back) {
+          width += hyp / 4;
+          right += hyp / 4;
+        }
+
+        console.log(hyp);
+        console.log(width + "\n\n");
+        //rotation, size of unjoined beam, the top/bottom offset beam, whether or not it is an unjoined beam
+        container.css(this.getBeamContainerCSS(this.angle, undefined, topBeamHeightFix + offset * i, false));
+        beam.css(this.getBeamCSS(width, lowerBeamHeight, right));
       }
     }
   };
@@ -812,7 +837,7 @@ var Beam = (function () {
     }
 
     if (this.beamPointingUp == true) {
-      rotate = rotate - rotate - rotate; //turns it into a negative number, which makes the beam point up. 
+      rotate = rotate - rotate - rotate; //turns it into a negative number, which makes the beam point up.
     }
 
     var css = { "height": "0px",
