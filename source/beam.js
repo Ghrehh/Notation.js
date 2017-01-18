@@ -212,7 +212,7 @@ class Beam {
         let height = nextNote ? 2 : 1;
 
         let beamHeightFix = this.stemFacingDown ? -8 : -1;
-
+        //hy
 
 
         let width = 0;
