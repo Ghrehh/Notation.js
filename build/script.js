@@ -168,14 +168,14 @@ $(document).ready(function(){
 
   note1.beam.beamTo(note2);
 
-  var note1 = i.bar(1).addNote("F5", "sixty-fourth");
+  var note1 = i.bar(1).addNote("D5", "sixty-fourth");
   i.bar(1).addNote("G5", "sixteenth")
   i.bar(1).addNote("G5", "sixty-fourth")
   i.bar(1).addNote("G5", "sixty-fourth")
 
   var note2 = i.bar(1).addNote("F5", "sixty-fourth");
 
-  //note1.beam.beamTo(note2);
+  note1.beam.beamTo(note2);
 
 
 

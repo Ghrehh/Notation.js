@@ -153,12 +153,9 @@ class Beam {
       let nextNoteStem = nextNote ? nextNote.noteStemReference : undefined;
 
       let offset = this.note.notation.barHeight / 10;
-      let lowerBeamHeight = 2;
 
-      let topBeamHeightFix = 0;
-      if (this.stemFacingDown === false) {
-        topBeamHeightFix = 2;
-      }
+
+
 
       let beam_back = false;
       let beam_all_forward = false;
@@ -171,6 +168,7 @@ class Beam {
         beam_back = true
         beam_all_forward = false
         beam_shared_forward = false
+        console.log("one")
       }
       else if (currNoteBeams.length >= nextNoteBeams.length) {
         //beam EVERYTHING BACK
@@ -178,6 +176,7 @@ class Beam {
         beam_back = true
         beam_all_forward = false
         beam_shared_forward = true
+        console.log("two")
       }
       else if(currNoteBeams.length < nextNoteBeams.length) {
         //beam NOTHING back
@@ -185,37 +184,42 @@ class Beam {
         beam_back = false
         beam_all_forward = true
         beam_shared_forward = false
+        console.log("three")
       }
 
 
 
       for (let i2 = 1; i2 < currNoteBeams.length; i2++){
-        let nextContainer = nextNote.beam.containerReferences[i2] || undefined;
+
+        let nextContainer = nextNote ? nextNote.beam.containerReferences[i2] : undefined;
 
         let container = currNote.beam.containerReferences[i2];
         let beam = currNote.beam.references[i2];
 
+        let adj, opp;
 
-        let opp = nextNoteStem.offset().left - currNoteStem.offset().left;
-        let adj;
-
-        if (this.stemFacingDown) {
-          adj = (nextNoteStem.offset().top + nextNoteStem.height()) - (currNoteStem.offset().top + currNoteStem.height());
-
+        if (nextContainer) {
+          opp = nextNoteStem.offset().left - currNoteStem.offset().left;
+          adj = this.stemFacingDown ? (nextNoteStem.offset().top + nextNoteStem.height()) - (currNoteStem.offset().top + currNoteStem.height()) : nextNoteStem.offset().top - currNoteStem.offset().top;
         }
         else {
-          adj = nextNoteStem.offset().top - currNoteStem.offset().top;
+          opp = currNoteStem.offset().left - prevNoteStem.offset().left;
+          adj = this.stemFacingDown ? (currNoteStem.offset().top + currNoteStem.height()) - (prevNoteStem.offset().top + prevNoteStem.height()) : currNoteStem.offset().top - prevNoteStem.offset().top;
         }
 
         let hyp = Math.sqrt((adj * adj) + (opp * opp));
 
-        let angle = nextNote ? this.angle : this.angle + 180;
+        let height = nextNote ? 2 : 1;
+
+        let beamHeightFix = this.stemFacingDown ? -8 : -1;
+
+
 
         let width = 0;
         let right = 0;
 
 
-        if (beam_shared_forward && nextContainer) {
+        if ((beam_shared_forward || beam_all_forward) && nextContainer) {
           width += hyp
         }
 
@@ -227,8 +231,8 @@ class Beam {
         console.log(hyp)
         console.log(width + "\n\n")
         //rotation, size of unjoined beam, the top/bottom offset beam, whether or not it is an unjoined beam
-        container.css(this.getBeamContainerCSS(this.angle, undefined, topBeamHeightFix + (offset * i), false));
-        beam.css(this.getBeamCSS(width, lowerBeamHeight, right));
+        container.css(this.getBeamContainerCSS(this.angle, undefined, beamHeightFix + (offset * i2), false));
+        beam.css(this.getBeamCSS(width, height, right));
 
       }
     }
