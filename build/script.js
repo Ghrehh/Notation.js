@@ -158,13 +158,13 @@ $(document).ready(function(){
   n.addBar();
   n.addBar();
   n.addBar();
-  var note1 = i.bar(1).addNote("F4", "thirty-second");
+  var note1 = i.bar(1).addNote("D4", "thirty-second");
   i.bar(1).addNote("F4", "sixteenth")
   i.bar(1).addNote("G4", "sixteenth")
   i.bar(1).addNote("G4", "thirty-second")
-  i.bar(1).addNote("G4", "eighth")
-  i.bar(1).addNote("G4", "eighth")
-  var note2 = i.bar(1).addNote("D4", "eighth");
+  i.bar(1).addNote("G4", "thirty-second")
+  i.bar(1).addNote("G4", "sixty-fourth")
+  var note2 = i.bar(1).addNote("F4", "sixty-fourth");
 
   note1.beam.beamTo(note2);
 

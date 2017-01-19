@@ -526,21 +526,18 @@ var Beam = (function () {
         beam_back = true;
         beam_all_forward = false;
         beam_shared_forward = false;
-        console.log("one");
       } else if (currNoteBeams.length >= nextNoteBeams.length) {
         //beam EVERYTHING BACK
         //beam anything the next note has forward
         beam_back = true;
         beam_all_forward = false;
         beam_shared_forward = true;
-        console.log("two");
       } else if (currNoteBeams.length < nextNoteBeams.length) {
         //beam NOTHING back
         //beam everything forward
         beam_back = false;
         beam_all_forward = true;
         beam_shared_forward = false;
-        console.log("three");
       }
 
       for (var i2 = 1; i2 < currNoteBeams.length; i2++) {
@@ -563,9 +560,7 @@ var Beam = (function () {
 
         var hyp = Math.sqrt(adj * adj + opp * opp);
 
-        var height = nextNote ? 2 : 1;
-
-        var beamHeightFix = this.stemFacingDown ? -8 : -1;
+        var height = 2;
 
         var width = 0;
         var right = 0;
@@ -579,10 +574,11 @@ var Beam = (function () {
           right += hyp / 4;
         }
 
-        console.log(hyp);
-        console.log(width + "\n\n");
+        //console.log(offset * i2)
+        //console.log(this.stemFacingDown)
+
         //rotation, size of unjoined beam, the top/bottom offset beam, whether or not it is an unjoined beam
-        container.css(this.getBeamContainerCSS(this.angle, undefined, beamHeightFix + offset * i2, false));
+        container.css(this.getBeamContainerCSS(this.angle, undefined, offset * i2, false, currNoteStem.height()));
         beam.css(this.getBeamCSS(width, height, right));
       }
     }
@@ -804,11 +800,13 @@ var Beam = (function () {
     }
   };
 
-  Beam.prototype.getBeamContainerCSS = function getBeamContainerCSS(rotate, setBeamHeight, setBeamOffset, isUnjoinedBeam) {
+  Beam.prototype.getBeamContainerCSS = function getBeamContainerCSS(rotate, setBeamHeight, setBeamOffset, isUnjoinedBeam, setStemHeight) {
     //setBeamHeight for unjoined beams, setBeamOffset for unjoined beams also
+
     var beamHeight = 3;
     var beamOffset = 0;
     var top = 0;
+    var stemHeight = undefined;;
 
     if (setBeamHeight != undefined) {
       if (typeof setBeamHeight != "number" || setBeamHeight < 1) {
@@ -824,9 +822,16 @@ var Beam = (function () {
       beamOffset = setBeamOffset;
     }
 
+    if (setStemHeight != undefined) {
+      if (typeof setStemHeight != "number") {
+        throw "in beam.setBeamContainerCSS() setStemHeight must be a number";
+      }
+      stemHeight = setStemHeight;
+    }
+
     if (this.stemFacingDown === true) {
       var noteStemHeightRaw = $(this.note.noteReference).find(".note-stem").css("height");
-      var noteStemHeightInt = parseInt($(this.note.noteReference).find(".note-stem").css("height").substr(0, noteStemHeightRaw.length - 2)); //shaves of the "px"
+      var noteStemHeightInt = stemHeight || parseInt($(this.note.noteReference).find(".note-stem").css("height").substr(0, noteStemHeightRaw.length - 2)); //shaves of the "px"
       top = noteStemHeightInt - beamHeight - beamOffset;
     } else {
       //width of the unjoined beam at it's thickest, should pull this form somewhere else when I'm calculating the width programatically
@@ -834,8 +839,7 @@ var Beam = (function () {
       if (isUnjoinedBeam === true) {
         unjoinedBeamWidth = 2;
       }
-
-      top = top + beamOffset - unjoinedBeamWidth;
+      top = beamOffset - unjoinedBeamWidth;
     }
 
     if (this.beamPointingUp == true) {
@@ -848,7 +852,11 @@ var Beam = (function () {
       "position": "relative",
       "top": top + "px"
     };
-
+    if (!isUnjoinedBeam) {
+      console.log(this.stemFacingDown);
+      console.log(top);
+      console.log("\n");
+    }
     return css;
   };
 

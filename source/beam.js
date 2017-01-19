@@ -154,9 +154,6 @@ class Beam {
 
       let offset = this.note.notation.barHeight / 10;
 
-
-
-
       let beam_back = false;
       let beam_all_forward = false;
       let beam_shared_forward = false;
@@ -168,7 +165,6 @@ class Beam {
         beam_back = true
         beam_all_forward = false
         beam_shared_forward = false
-        console.log("one")
       }
       else if (currNoteBeams.length >= nextNoteBeams.length) {
         //beam EVERYTHING BACK
@@ -176,7 +172,6 @@ class Beam {
         beam_back = true
         beam_all_forward = false
         beam_shared_forward = true
-        console.log("two")
       }
       else if(currNoteBeams.length < nextNoteBeams.length) {
         //beam NOTHING back
@@ -184,7 +179,6 @@ class Beam {
         beam_back = false
         beam_all_forward = true
         beam_shared_forward = false
-        console.log("three")
       }
 
 
@@ -209,10 +203,7 @@ class Beam {
 
         let hyp = Math.sqrt((adj * adj) + (opp * opp));
 
-        let height = nextNote ? 2 : 1;
-
-        let beamHeightFix = this.stemFacingDown ? -8 : -1;
-        //hy
+        let height = 2;
 
 
         let width = 0;
@@ -228,10 +219,11 @@ class Beam {
           right += hyp / 4
         }
 
-        console.log(hyp)
-        console.log(width + "\n\n")
+        //console.log(offset * i2)
+        //console.log(this.stemFacingDown)
+
         //rotation, size of unjoined beam, the top/bottom offset beam, whether or not it is an unjoined beam
-        container.css(this.getBeamContainerCSS(this.angle, undefined, beamHeightFix + (offset * i2), false));
+        container.css(this.getBeamContainerCSS(this.angle, undefined, (offset * i2), false, currNoteStem.height()) );
         beam.css(this.getBeamCSS(width, height, right));
 
       }
@@ -487,11 +479,13 @@ class Beam {
 
 
 
-  getBeamContainerCSS(rotate, setBeamHeight, setBeamOffset, isUnjoinedBeam){
+  getBeamContainerCSS(rotate, setBeamHeight, setBeamOffset, isUnjoinedBeam, setStemHeight){
     //setBeamHeight for unjoined beams, setBeamOffset for unjoined beams also
+
     let beamHeight = 3;
     let beamOffset = 0;
     let top = 0;
+    let stemHeight;;
 
     if (setBeamHeight != undefined) {
       if (typeof setBeamHeight != "number" || setBeamHeight < 1) {
@@ -507,9 +501,16 @@ class Beam {
       beamOffset = setBeamOffset
     }
 
+    if (setStemHeight != undefined) {
+     if (typeof setStemHeight != "number" ) {
+        throw "in beam.setBeamContainerCSS() setStemHeight must be a number";
+      }
+      stemHeight = setStemHeight
+    }
+
     if (this.stemFacingDown === true){
       let noteStemHeightRaw = $(this.note.noteReference).find(".note-stem").css("height");
-      let noteStemHeightInt = parseInt($(this.note.noteReference).find(".note-stem").css("height").substr(0, noteStemHeightRaw.length - 2)); //shaves of the "px"
+      let noteStemHeightInt = stemHeight || parseInt($(this.note.noteReference).find(".note-stem").css("height").substr(0, noteStemHeightRaw.length - 2)); //shaves of the "px"
       top = noteStemHeightInt - beamHeight - beamOffset;
 
     }
@@ -519,8 +520,8 @@ class Beam {
       if (isUnjoinedBeam === true ) {
         unjoinedBeamWidth = 2;
       }
+      top = beamOffset - unjoinedBeamWidth ;
 
-      top = top + beamOffset - unjoinedBeamWidth ;
     }
 
     if (this.beamPointingUp == true){
@@ -533,7 +534,11 @@ class Beam {
                "position": "relative",
                "top": top + "px",
               }
-
+              if (!isUnjoinedBeam) {
+                console.log(this.stemFacingDown)
+                console.log(top)
+                console.log("\n")
+              }
     return css;
   }
 
