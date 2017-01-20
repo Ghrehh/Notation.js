@@ -1567,7 +1567,7 @@ var Notation = (function () {
       "margin": 0
     };
 
-    $("." + this.barsContainer).css(css);
+    $(this.container + " ." + this.barsContainer).css(css);
   };
 
   //loops through bars and searches for breakpoints, adds conjoining lines/clefs etc
