@@ -166,7 +166,7 @@ $(document).ready(function(){
   i.bar(1).addNote("G4", "sixty-fourth")
   var note2 = i.bar(1).addNote("F4", "sixty-fourth");
 
-  note1.beam.beamTo(note2);
+  note1.beamTo(note2);
 
   var note1 = i.bar(1).addNote("F5", "sixty-fourth");
   i.bar(1).addNote("G5", "sixteenth")
@@ -175,7 +175,7 @@ $(document).ready(function(){
 
   var note2 = i.bar(1).addNote("D5", "sixty-fourth");
 
-  note1.beam.beamTo(note2);
+  note1.beamTo(note2);
 
 
 
