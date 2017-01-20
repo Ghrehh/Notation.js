@@ -154,32 +154,17 @@ class Beam {
 
       let offset = this.note.notation.barHeight / 10;
 
-      let beam_back = false;
-      let beam_all_forward = false;
-      let beam_shared_forward = false;
+      let next_has_greater_beams = false
+      let final_note = false
 
       ///if the final note
-      if (nextNote === undefined){
-        //beam EVERYTHING BACK
-        //beam NOTHING FORWARD
-        beam_back = true
-        beam_all_forward = false
-        beam_shared_forward = false
+      if (nextNote === undefined) {
+        final_note = true
       }
-      else if (currNoteBeams.length >= nextNoteBeams.length) {
-        //beam EVERYTHING BACK
-        //beam anything the next note has forward
-        beam_back = true
-        beam_all_forward = false
-        beam_shared_forward = true
+      else if (currNoteBeams.length <= nextNoteBeams.length ){
+        next_has_greater_beams = true
       }
-      else if(currNoteBeams.length < nextNoteBeams.length) {
-        //beam NOTHING back
-        //beam everything forward
-        beam_back = false
-        beam_all_forward = true
-        beam_shared_forward = false
-      }
+
 
 
 
@@ -197,6 +182,7 @@ class Beam {
           adj = this.stemFacingDown ? (nextNoteStem.offset().top + nextNoteStem.height()) - (currNoteStem.offset().top + currNoteStem.height()) : nextNoteStem.offset().top - currNoteStem.offset().top;
         }
         else {
+
           opp = currNoteStem.offset().left - prevNoteStem.offset().left;
           adj = this.stemFacingDown ? (currNoteStem.offset().top + currNoteStem.height()) - (prevNoteStem.offset().top + prevNoteStem.height()) : currNoteStem.offset().top - prevNoteStem.offset().top;
         }
@@ -210,21 +196,27 @@ class Beam {
         let right = 0;
 
 
-        if ((beam_shared_forward || beam_all_forward) && nextContainer) {
+        if (nextContainer) {
           width += hyp
         }
 
-        if (beam_back) {
+        if (!next_has_greater_beams || final_note) {
           width += hyp / 4
           right += hyp / 4
         }
 
-        //console.log(offset * i2)
-        //console.log(this.stemFacingDown)
+        let final_fix = 0
+
+        if (final_note) {
+          final_fix = this.stemFacingDown ? 1 : 2.7
+        }
+
+
 
         //rotation, size of unjoined beam, the top/bottom offset beam, whether or not it is an unjoined beam
-        container.css(this.getBeamContainerCSS(this.angle, undefined, (offset * i2), false, currNoteStem.height()) );
+        container.css(this.getBeamContainerCSS(this.angle, undefined, final_fix + (offset * i2), false, currNoteStem.height()) );
         beam.css(this.getBeamCSS(width, height, right));
+
 
       }
     }
@@ -389,8 +381,10 @@ class Beam {
     let firstNote = this.note;
     let beamWidth = 2;
 
-    for (let i = 0; i < this.middleNotes.length; i++ ){
-      let middleNote = this.middleNotes[i];
+    let notes = this.middleNotes.slice()
+
+    for (let i = 0; i < notes.length; i++ ){
+      let middleNote = notes[i];
 
 
       let opp = $(middleNote.noteStemReference).offset().left - $(firstNote.noteStemReference).offset().left;
@@ -534,11 +528,7 @@ class Beam {
                "position": "relative",
                "top": top + "px",
               }
-              if (!isUnjoinedBeam) {
-                console.log(this.stemFacingDown)
-                console.log(top)
-                console.log("\n")
-              }
+
     return css;
   }
 

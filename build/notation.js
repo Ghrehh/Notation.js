@@ -515,29 +515,14 @@ var Beam = (function () {
 
       var offset = this.note.notation.barHeight / 10;
 
-      var beam_back = false;
-      var beam_all_forward = false;
-      var beam_shared_forward = false;
+      var next_has_greater_beams = false;
+      var final_note = false;
 
       ///if the final note
       if (nextNote === undefined) {
-        //beam EVERYTHING BACK
-        //beam NOTHING FORWARD
-        beam_back = true;
-        beam_all_forward = false;
-        beam_shared_forward = false;
-      } else if (currNoteBeams.length >= nextNoteBeams.length) {
-        //beam EVERYTHING BACK
-        //beam anything the next note has forward
-        beam_back = true;
-        beam_all_forward = false;
-        beam_shared_forward = true;
-      } else if (currNoteBeams.length < nextNoteBeams.length) {
-        //beam NOTHING back
-        //beam everything forward
-        beam_back = false;
-        beam_all_forward = true;
-        beam_shared_forward = false;
+        final_note = true;
+      } else if (currNoteBeams.length <= nextNoteBeams.length) {
+        next_has_greater_beams = true;
       }
 
       for (var i2 = 1; i2 < currNoteBeams.length; i2++) {
@@ -554,6 +539,7 @@ var Beam = (function () {
           opp = nextNoteStem.offset().left - currNoteStem.offset().left;
           adj = this.stemFacingDown ? nextNoteStem.offset().top + nextNoteStem.height() - (currNoteStem.offset().top + currNoteStem.height()) : nextNoteStem.offset().top - currNoteStem.offset().top;
         } else {
+
           opp = currNoteStem.offset().left - prevNoteStem.offset().left;
           adj = this.stemFacingDown ? currNoteStem.offset().top + currNoteStem.height() - (prevNoteStem.offset().top + prevNoteStem.height()) : currNoteStem.offset().top - prevNoteStem.offset().top;
         }
@@ -565,20 +551,23 @@ var Beam = (function () {
         var width = 0;
         var right = 0;
 
-        if ((beam_shared_forward || beam_all_forward) && nextContainer) {
+        if (nextContainer) {
           width += hyp;
         }
 
-        if (beam_back) {
+        if (!next_has_greater_beams || final_note) {
           width += hyp / 4;
           right += hyp / 4;
         }
 
-        //console.log(offset * i2)
-        //console.log(this.stemFacingDown)
+        var final_fix = 0;
+
+        if (final_note) {
+          final_fix = this.stemFacingDown ? 1 : 2.7;
+        }
 
         //rotation, size of unjoined beam, the top/bottom offset beam, whether or not it is an unjoined beam
-        container.css(this.getBeamContainerCSS(this.angle, undefined, offset * i2, false, currNoteStem.height()));
+        container.css(this.getBeamContainerCSS(this.angle, undefined, final_fix + offset * i2, false, currNoteStem.height()));
         beam.css(this.getBeamCSS(width, height, right));
       }
     }
@@ -728,8 +717,10 @@ var Beam = (function () {
     var firstNote = this.note;
     var beamWidth = 2;
 
-    for (var i = 0; i < this.middleNotes.length; i++) {
-      var middleNote = this.middleNotes[i];
+    var notes = this.middleNotes.slice();
+
+    for (var i = 0; i < notes.length; i++) {
+      var middleNote = notes[i];
 
       var opp = $(middleNote.noteStemReference).offset().left - $(firstNote.noteStemReference).offset().left;
       var adj = opp / Math.tan((90 - this.angle) * Math.PI / 180); // opp/tan(angle) 90- this.angle because the angle applied to the css is the outside angle, I need the inside. note Math.PI/180 is the opposite of the function used on the one above
@@ -852,11 +843,7 @@ var Beam = (function () {
       "position": "relative",
       "top": top + "px"
     };
-    if (!isUnjoinedBeam) {
-      console.log(this.stemFacingDown);
-      console.log(top);
-      console.log("\n");
-    }
+
     return css;
   };
 
