@@ -418,12 +418,35 @@ var Beam = (function () {
     //works out the 16th - 64th note beams for all the notes
     this.__applyFirstNoteBeams(); //do first one seperates since it cant beam backwards? might be best to meld this in the the next method
     this.__sortNoteBeams();
+    this.__updateBarMargin();
   };
 
   Beam.prototype.__initialize = function __initialize() {
     this.__printBeamContainer();
     this.__printBeam();
     this.__unjoinedBeam();
+  };
+
+  Beam.prototype.__updateBarMargin = function __updateBarMargin() {
+    var fullArray = this.middleNotes.slice(0);fullArray.push(this.endNote);fullArray.unshift(this.note);
+    var space = this.note.notation.barHeight / 8;
+
+    if (this.stemFacingDown) {
+      for (var i = 0; i < fullArray.length; i++) {
+        var note = fullArray[i];
+        var offset = note.noteParameters.topOffset;
+
+        if (offset >= 3.5) {
+          var mult = (offset - 3) / 0.5;
+
+          var val = this.note.notation.barHeight + space * mult;
+          console.log(mult);
+          console.log(space);
+          console.log(val);
+          this.note.notation.changeBarPadding(val);
+        }
+      }
+    }
   };
 
   Beam.prototype.__printBeamContainer = function __printBeamContainer() {
@@ -526,8 +549,6 @@ var Beam = (function () {
       }
     }
   };
-
-  //TODO
 
   Beam.prototype.__checkNotesAreValid = function __checkNotesAreValid() {
     var allNotesValid = true;
@@ -645,11 +666,6 @@ var Beam = (function () {
       }
   };
 
-  Beam.prototype.__resizeStem = function __resizeStem(note, amount) {
-    var currentHeight = $(note.noteStemReference).height();
-    note.setNoteStemCSS(currentHeight + amount);
-  };
-
   Beam.prototype.__resizeMiddleNotes = function __resizeMiddleNotes() {
 
     var minStemSize = this.note.notation.barHeight / 1.4;
@@ -707,6 +723,11 @@ var Beam = (function () {
         }
       }
     }
+  };
+
+  Beam.prototype.__resizeStem = function __resizeStem(note, amount) {
+    var currentHeight = $(note.noteStemReference).height();
+    note.setNoteStemCSS(currentHeight + amount);
   };
 
   Beam.prototype.__readjustBeam = function __readjustBeam(difference) {
@@ -771,8 +792,9 @@ var Beam = (function () {
 
   Beam.prototype.__sortNoteBeams = function __sortNoteBeams() {
 
-    var fullArray = this.middleNotes;fullArray.push(this.endNote);fullArray.unshift(this.note);
+    //let fullArray = this.middleNotes;fullArray.push(this.endNote); fullArray.unshift(this.note);
 
+    var fullArray = this.middleNotes.slice(0);fullArray.push(this.endNote);fullArray.unshift(this.note);
     for (var i = 1; i < fullArray.length; i++) {
       var prevNote = fullArray[i - 1];
       var currNote = fullArray[i];
@@ -799,7 +821,7 @@ var Beam = (function () {
       }
 
       for (var i2 = 1; i2 < currNoteBeams.length; i2++) {
-
+        var prevContainer = prevNote ? prevNote.beam.containerReferences[i2] : undefined;
         var nextContainer = nextNote ? nextNote.beam.containerReferences[i2] : undefined;
 
         var container = currNote.beam.containerReferences[i2];
@@ -828,7 +850,7 @@ var Beam = (function () {
           width += hyp;
         }
 
-        if (!next_has_greater_beams || final_note) {
+        if (!next_has_greater_beams && !final_note || final_note && !prevContainer) {
           width += hyp / 4;
           right += hyp / 4;
         }
@@ -836,7 +858,7 @@ var Beam = (function () {
         var final_fix = 0;
 
         if (final_note) {
-          final_fix = this.stemFacingDown ? 1 : 2.7;
+          final_fix = this.stemFacingDown ? 1 : 1.8;
         }
 
         //rotation, size of unjoined beam, the top/bottom offset beam, whether or not it is an unjoined beam
@@ -1807,7 +1829,6 @@ var Notation = (function () {
     //only need to do it for the first instrument
 
     var firstInstrument = this.instruments[0];
-    console.log(firstInstrument);
 
     for (var i = 0; i < firstInstrument.bars.length; i++) {
       var bar = firstInstrument.bars[i];
@@ -2279,7 +2300,10 @@ var Note = (function () {
       "E4": { topOffset: 3.5, stemDirection: "up" },
       "D4": { topOffset: 4.0, stemDirection: "up" },
       "C4": { topOffset: 4.5, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 1 },
-      "B3": { topOffset: 5.0, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 1 }
+      "B3": { topOffset: 5.0, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 1 },
+      "A3": { topOffset: 5.5, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 2 },
+      "G3": { topOffset: 6.0, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 2 },
+      "F3": { topOffset: 6.5, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 3 }
     };
 
     return noteDictionary[note];

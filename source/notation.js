@@ -364,7 +364,6 @@ class Notation {
     //only need to do it for the first instrument
 
     let firstInstrument = this.instruments[0];
-    console.log(firstInstrument)
 
     for (let i = 0; i < firstInstrument.bars.length; i++){
       let bar = firstInstrument.bars[i];

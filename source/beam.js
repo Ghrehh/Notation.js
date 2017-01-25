@@ -47,6 +47,7 @@ class Beam {
     //works out the 16th - 64th note beams for all the notes
     this.__applyFirstNoteBeams(); //do first one seperates since it cant beam backwards? might be best to meld this in the the next method
     this.__sortNoteBeams();
+    this.__updateBarMargin();
 
   }
 
@@ -59,7 +60,29 @@ private
     this.__unjoinedBeam();
   }
 
+  __updateBarMargin(){
+    let fullArray = this.middleNotes.slice(0);fullArray.push(this.endNote); fullArray.unshift(this.note);
+    let space = this.note.notation.barHeight / 8;
 
+    if (this.stemFacingDown) {
+      for (let i = 0; i < fullArray.length; i++){
+        let note = fullArray[i];
+        let offset = note.noteParameters.topOffset
+
+        if (offset >= 3.5) {
+          let mult = (offset - 3) / 0.5;
+
+
+          let val = this.note.notation.barHeight + (space * mult);
+          console.log(mult)
+          console.log(space)
+          console.log(val)
+          this.note.notation.changeBarPadding(val);
+        }
+
+      }
+    }
+  }
 
   __printBeamContainer(){
     let numberOfContainers = 1;
@@ -172,7 +195,6 @@ private
       }
     }
 
-  //TODO
   __checkNotesAreValid(){
     let allNotesValid = true;
   }
@@ -297,11 +319,6 @@ private
 
   }
 
-  __resizeStem(note, amount){
-    let currentHeight = $(note.noteStemReference).height();
-    note.setNoteStemCSS(currentHeight + amount);
-  }
-
   __resizeMiddleNotes(){
 
     let minStemSize = this.note.notation.barHeight / 1.4
@@ -374,10 +391,16 @@ private
 
   }
 
+  __resizeStem(note, amount){
+    let currentHeight = $(note.noteStemReference).height();
+    note.setNoteStemCSS(currentHeight + amount);
+  }
+
   __readjustBeam(difference){
     this.__resizeStem(this.note, difference);
     this.__resizeStem(this.endNote, difference);
   }
+
 
   __applyFirstNoteBeams(){
     //Apply the main beam that stretches across all the notes in the grouping, these values are calculated in the __calculateHypotenuseAndAngle() function
@@ -442,8 +465,9 @@ private
 
   __sortNoteBeams(){
 
-    let fullArray = this.middleNotes; fullArray.push(this.endNote); fullArray.unshift(this.note);
+    //let fullArray = this.middleNotes;fullArray.push(this.endNote); fullArray.unshift(this.note);
 
+    let fullArray = this.middleNotes.slice(0);fullArray.push(this.endNote); fullArray.unshift(this.note);
     for (let i = 1; i < fullArray.length; i++){
       let prevNote = fullArray[i - 1];
       let currNote = fullArray[i];
@@ -474,7 +498,7 @@ private
 
 
       for (let i2 = 1; i2 < currNoteBeams.length; i2++){
-
+        let prevContainer = prevNote ? prevNote.beam.containerReferences[i2] : undefined;
         let nextContainer = nextNote ? nextNote.beam.containerReferences[i2] : undefined;
 
         let container = currNote.beam.containerReferences[i2];
@@ -505,7 +529,7 @@ private
           width += hyp
         }
 
-        if (!next_has_greater_beams || final_note) {
+        if ((!next_has_greater_beams && !final_note ) || (final_note && !prevContainer)  ) {
           width += hyp / 4
           right += hyp / 4
         }
@@ -513,7 +537,7 @@ private
         let final_fix = 0
 
         if (final_note) {
-          final_fix = this.stemFacingDown ? 1 : 2.7
+          final_fix = this.stemFacingDown ? 1 : 1.8
         }
 
 

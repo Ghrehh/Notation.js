@@ -471,6 +471,9 @@ class Note {
                           "D4": {topOffset: 4.0, stemDirection: "up"},
                           "C4": {topOffset: 4.5, stemDirection: "up",  ledgerLinePosition: "bottom", ledgerLineNumber: 1},
                           "B3": {topOffset: 5.0, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 1},
+                          "A3": {topOffset: 5.5, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 2},
+                          "G3": {topOffset: 6.0, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 2},
+                          "F3": {topOffset: 6.5, stemDirection: "up", ledgerLinePosition: "bottom", ledgerLineNumber: 3},
                         }
 
     return noteDictionary[note];
