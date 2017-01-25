@@ -14,6 +14,10 @@
     **************Notation.js**************
     **************************************/
 
+    //To use, extract the "notation.js" file and the "media" directory from https://github.com/Ghrehh/Notation.js/tree/master/build
+    //Notation.js is built upon jQuery, so sure to include it in your html file.
+    //Also please place the media folder in the same directory as your html file. (only a temporary work-around).
+
 
     //point Notation.js at a container and specify a size
     var n = new Notation(".container", 35);
@@ -32,6 +36,7 @@
     i.bar(1).addNote("D4", "sixteenth");
 
   </code></pre>
+
   <div class="container"></div>
 
   <pre><code>
@@ -46,6 +51,7 @@
     note2.beamTo(note5);
 
   </code></pre>
+
   <div class="container2"></div>
 
   <pre><code>
@@ -56,7 +62,7 @@
     var i =  n.addInstrument("Violin");
     var i2 =  n.addInstrument("Violin 2");
     var i3 =  n.addInstrument("Viola");
-  
+
 
     n.addBar();
     n.addBar();
@@ -64,8 +70,6 @@
     //change key and time signatures
     i2.bar(1).changeKeySignature("flats", 7);
     i2.bar(1).changeTimeSignature(7, 8)
-
-
 
   </code></pre>
   <div class="container3"></div>
