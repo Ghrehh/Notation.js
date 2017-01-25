@@ -410,7 +410,9 @@ var Beam = (function () {
     this.__checkNotesAreValid(); //make sure there are no 1,2 or 4 notes in the grouping
     this.__removeBeamCSS(); //remove the unjoined beam css
     this.__pickStemDirection(); //figure out which direction to beam the notes in
-    this.__calculate(); // works out the angle and hypotenuse between the first and last note 8th note beam
+    this.__calculateOppositeAndAdjacent();
+    this.__calculateHypotenuseAndAngle(); // works out the angle and hypotenuse between the first and last note 8th note beam
+
     this.__resizeMiddleNotes(); //resizes the middle notes so that they don't go past the new beam
 
     //works out the 16th - 64th note beams for all the notes
@@ -584,7 +586,7 @@ var Beam = (function () {
 
   //calculates angles and lengths of main beam between first and last
 
-  Beam.prototype.__calculate = function __calculate() {
+  Beam.prototype.__calculateOppositeAndAdjacent = function __calculateOppositeAndAdjacent() {
     var targetNote = this.endNote;
     if (targetNote === undefined) {
       throw "Beam.calculate: Beam.endNote was not defined";
@@ -603,6 +605,9 @@ var Beam = (function () {
       this.opp = Math.abs(this.opp);
       this.beamPointingUp = false;
     } //makes the opp a positive number if it is negative
+  };
+
+  Beam.prototype.__calculateHypotenuseAndAngle = function __calculateHypotenuseAndAngle() {
 
     this.hyp = Math.sqrt(this.adj * this.adj + this.opp * this.opp);
 
@@ -616,7 +621,7 @@ var Beam = (function () {
       this.hyp = Math.sqrt(this.adj * this.adj + spaceHeight * spaceHeight);
 
       //if the beam needed to be set to the max angle, then the second stem wont be connected to it, stems need to be shortened/lengthened
-      this.__resizeFirstAndLastStems(this.opp - spaceHeight); //this.opp - spaceheight will be the gap between the second note and the stem
+      this.__resizeFirstOrLastStem(this.opp - spaceHeight); //this.opp - spaceheight will be the gap between the second note and the stem
     }
 
     //round to 2 decimal places
@@ -625,25 +630,29 @@ var Beam = (function () {
 
   //fixes the length of the first and last stems if the stem angle needed to be readjusted
 
-  Beam.prototype.__resizeFirstAndLastStems = function __resizeFirstAndLastStems(space) {
+  Beam.prototype.__resizeFirstOrLastStem = function __resizeFirstOrLastStem(amount) {
 
     var first = $(this.note.noteHeadReference).offset().top;
     var second = $(this.endNote.noteHeadReference).offset().top;
 
     //make first note taller
     if (this.stemFacingDown && first < second || this.stemFacingDown === false && first > second) {
-      var currentHeight = $(this.note.noteStemReference).height();
-      this.note.setNoteStemCSS(currentHeight + space);
+      this.__resizeStem(this.note, amount);
     }
     //make second note taller
     else {
-        var currentHeight = $(this.note.noteStemReference).height();
-        this.endNote.setNoteStemCSS(currentHeight + space);
+        this.__resizeStem(this.endNote, amount);
       }
+  };
+
+  Beam.prototype.__resizeStem = function __resizeStem(note, amount) {
+    var currentHeight = $(note.noteStemReference).height();
+    note.setNoteStemCSS(currentHeight + amount);
   };
 
   Beam.prototype.__resizeMiddleNotes = function __resizeMiddleNotes() {
 
+    var minStemSize = this.note.notation.barHeight / 1.4;
     var firstNote = this.note;
     var beamWidth = 2;
 
@@ -670,6 +679,15 @@ var Beam = (function () {
         }
 
         middleNote.setNoteStemCSS(currentHeight + (targetPos - currentPos));
+
+        if (currentHeight - (currentPos - targetPos) < minStemSize) {
+          var difference = minStemSize - (currentHeight - (currentPos - targetPos));
+          if (difference > 1) {
+            //the dirtiest of hacks
+            this.__readjustBeam(difference);
+            i = -1;
+          }
+        }
       } else {
         var topOfStem = $(this.note.noteStemReference).offset().top;
         currentPos = $(middleNote.noteStemReference).offset().top;
@@ -681,18 +699,23 @@ var Beam = (function () {
         }
 
         middleNote.setNoteStemCSS(currentHeight + (currentPos - targetPos - beamWidth));
+
+        if (currentHeight - (targetPos - currentPos) < minStemSize) {
+          var difference = minStemSize - (currentHeight - (targetPos - currentPos));
+          this.__readjustBeam(difference);
+          i = -1;
+        }
       }
     }
   };
 
-  //TODO
-
-  Beam.prototype.__pickBeamType = function __pickBeamType() {
-    //todo
+  Beam.prototype.__readjustBeam = function __readjustBeam(difference) {
+    this.__resizeStem(this.note, difference);
+    this.__resizeStem(this.endNote, difference);
   };
 
   Beam.prototype.__applyFirstNoteBeams = function __applyFirstNoteBeams() {
-    //Apply the main beam that stretches across all the notes in the grouping, these values are calculated in the __calculate() function
+    //Apply the main beam that stretches across all the notes in the grouping, these values are calculated in the __calculateHypotenuseAndAngle() function
     $(this.containerReferences[0]).css(this.__getBeamContainerCSS(this.angle));
     $(this.references[0]).css(this.__getBeamCSS(this.hyp));
 
@@ -1841,7 +1864,7 @@ var Note = (function () {
     this.pitch = pitch;
     this.duration = duration;
     if (this.duration === undefined) {
-      this.duration = "quarter-note";
+      this.duration = "quarter";
     }
     this.accidental;
     this.octave;
@@ -1895,7 +1918,7 @@ var Note = (function () {
     }
 
     //note stem container, anything rotated in a nother roated element needs to have a 0 height 0 width container to stop strange things from happening when the height is adjusted
-    if (this.duration !== "whole-note") {
+    if (this.duration !== "whole") {
       this.printNoteStemContainer();
       this.setNoteStemContainerReference();
       this.setNoteStemContainerCSS();
@@ -1905,13 +1928,17 @@ var Note = (function () {
       this.setNoteStemCSS();
     }
 
-    if (this.duration !== "whole-note" && this.duration !== "half-note" && this.duration !== "quarter-note") {
+    if (this.duration !== "whole" && this.duration !== "half" && this.duration !== "quarter") {
       this.beam = new _beam2["default"](this);
     }
   };
 
   Note.prototype.beamTo = function beamTo(beam) {
-    this.beam.__to(beam);
+    if (this.beam != undefined) {
+      this.beam.__to(beam);
+    } else {
+      throw "error in Note.beamTo(): You cannot beam a note that is shorter than an 8th note";
+    }
   };
 
   Note.prototype.printNoteContainer = function printNoteContainer() {
@@ -2122,7 +2149,7 @@ var Note = (function () {
     //tweaks positioning of note head slightly
     var noteHeadPadding = noteHeadHeight / 8;
 
-    if (this.duration === "whole-note" || this.duration === "half-note") {
+    if (this.duration === "whole" || this.duration === "half") {
       background = "transparent";
     } else {
       background = "black";

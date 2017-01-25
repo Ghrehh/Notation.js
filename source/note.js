@@ -29,7 +29,7 @@ class Note {
     this.pitch = pitch;
     this.duration = duration;
     if (this.duration === undefined) {
-      this.duration = "quarter-note"
+      this.duration = "quarter"
     }
     this.accidental;
     this.octave;
@@ -88,7 +88,7 @@ class Note {
     }
 
     //note stem container, anything rotated in a nother roated element needs to have a 0 height 0 width container to stop strange things from happening when the height is adjusted
-    if (this.duration !== "whole-note") {
+    if (this.duration !== "whole") {
       this.printNoteStemContainer();
       this.setNoteStemContainerReference();
       this.setNoteStemContainerCSS();
@@ -99,14 +99,20 @@ class Note {
     }
 
 
-    if (this.duration !== "whole-note" && this.duration !== "half-note" && this.duration !== "quarter-note") {
+    if (this.duration !== "whole" && this.duration !== "half" && this.duration !== "quarter") {
       this.beam = new Beam(this);
     }
 
   }
 
   beamTo(beam){
-    this.beam.__to(beam);
+    if (this.beam != undefined) {
+      this.beam.__to(beam);
+    }
+    else {
+      throw "error in Note.beamTo(): You cannot beam a note that is shorter than an 8th note"
+    }
+
   }
 
   printNoteContainer() {
@@ -327,7 +333,7 @@ class Note {
     //tweaks positioning of note head slightly
     let noteHeadPadding = noteHeadHeight / 8;
 
-    if (this.duration === "whole-note" || this.duration === "half-note"){
+    if (this.duration === "whole" || this.duration === "half"){
       background = "transparent";
     }
     else {

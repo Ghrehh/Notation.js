@@ -39,7 +39,9 @@ class Beam {
     this.__checkNotesAreValid(); //make sure there are no 1,2 or 4 notes in the grouping
     this.__removeBeamCSS(); //remove the unjoined beam css
     this.__pickStemDirection(); //figure out which direction to beam the notes in
-    this.__calculate(); // works out the angle and hypotenuse between the first and last note 8th note beam
+    this.__calculateOppositeAndAdjacent();
+    this.__calculateHypotenuseAndAngle(); // works out the angle and hypotenuse between the first and last note 8th note beam
+
     this.__resizeMiddleNotes(); //resizes the middle notes so that they don't go past the new beam
 
     //works out the 16th - 64th note beams for all the notes
@@ -231,7 +233,7 @@ private
   }
 
   //calculates angles and lengths of main beam between first and last
-  __calculate(){
+  __calculateOppositeAndAdjacent(){
     let targetNote = this.endNote;
     if (targetNote === undefined){
       throw "Beam.calculate: Beam.endNote was not defined";
@@ -250,6 +252,10 @@ private
       this.beamPointingUp = false;
     } //makes the opp a positive number if it is negative
 
+  }
+
+  __calculateHypotenuseAndAngle(){
+
     this.hyp = Math.sqrt((this.adj * this.adj) + (this.opp * this.opp));
 
     this.angle = Math.atan(this.opp / this.adj) * 180/Math.PI;
@@ -263,7 +269,7 @@ private
       this.hyp = Math.sqrt((this.adj * this.adj) + (spaceHeight * spaceHeight));
 
       //if the beam needed to be set to the max angle, then the second stem wont be connected to it, stems need to be shortened/lengthened
-      this.__resizeFirstAndLastStems(this.opp - spaceHeight); //this.opp - spaceheight will be the gap between the second note and the stem
+      this.__resizeFirstOrLastStem(this.opp - spaceHeight); //this.opp - spaceheight will be the gap between the second note and the stem
 
     }
 
@@ -275,27 +281,30 @@ private
   }
 
   //fixes the length of the first and last stems if the stem angle needed to be readjusted
-  __resizeFirstAndLastStems(space){
+  __resizeFirstOrLastStem(amount){
 
     let first = $(this.note.noteHeadReference).offset().top
     let second = $(this.endNote.noteHeadReference).offset().top
 
     //make first note taller
     if ((this.stemFacingDown && first < second) || (this.stemFacingDown === false &&  first > second) ) {
-      let currentHeight = $(this.note.noteStemReference).height();
-      this.note.setNoteStemCSS(currentHeight + space);
-
+      this.__resizeStem(this.note, amount)
     }
     //make second note taller
     else {
-      let currentHeight = $(this.note.noteStemReference).height();
-      this.endNote.setNoteStemCSS(currentHeight + space);
+      this.__resizeStem(this.endNote, amount)
     }
 
   }
 
+  __resizeStem(note, amount){
+    let currentHeight = $(note.noteStemReference).height();
+    note.setNoteStemCSS(currentHeight + amount);
+  }
+
   __resizeMiddleNotes(){
 
+    let minStemSize = this.note.notation.barHeight / 1.4
     let firstNote = this.note;
     let beamWidth = 2;
 
@@ -325,6 +334,16 @@ private
         }
 
         middleNote.setNoteStemCSS(currentHeight + (targetPos - currentPos ));
+
+        if (currentHeight - (currentPos - targetPos) < minStemSize) {
+          let difference = minStemSize - (currentHeight - (currentPos - targetPos)) ;
+          if (difference > 1) { //the dirtiest of hacks
+            this.__readjustBeam(difference);
+            i = -1;
+          }
+
+        }
+
       }
       else {
         let topOfStem = $(this.note.noteStemReference).offset().top;
@@ -339,6 +358,12 @@ private
 
         middleNote.setNoteStemCSS(currentHeight + (currentPos - targetPos - beamWidth ));
 
+        if (currentHeight - (targetPos - currentPos) < minStemSize) {
+          let difference = minStemSize - (currentHeight - (targetPos - currentPos)) ;
+          this.__readjustBeam(difference);
+          i = -1;
+        }
+
       }
 
 
@@ -349,13 +374,13 @@ private
 
   }
 
-  //TODO
-  __pickBeamType(){
-    //todo
+  __readjustBeam(difference){
+    this.__resizeStem(this.note, difference);
+    this.__resizeStem(this.endNote, difference);
   }
 
   __applyFirstNoteBeams(){
-    //Apply the main beam that stretches across all the notes in the grouping, these values are calculated in the __calculate() function
+    //Apply the main beam that stretches across all the notes in the grouping, these values are calculated in the __calculateHypotenuseAndAngle() function
     $(this.containerReferences[0]).css(this.__getBeamContainerCSS(this.angle));
     $(this.references[0]).css(this.__getBeamCSS(this.hyp));
 
