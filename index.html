@@ -10,9 +10,65 @@
 
 <body>
   <pre><code>
-    var n = new Notation(".container", 35);;
+    /**************************************
+    **************Notation.js**************
+    **************************************/
+
+
+    //point Notation.js at a container and specify a size
+    var n = new Notation(".container", 35);
+
+    //optionally add a title and tempo
+    n.setTitle("Test Title")
+    n.setTempo("120 BPM")
+
+    //then add an instrument
+    var i =  n.addInstrument("Violin");
+
+    //and some notes
+    i.bar(1).addNote("C5", "quarter");
+    i.bar(1).addNote("F4", "eighth");
+    i.bar(1).addNote("C4", "sixteenth");
+    i.bar(1).addNote("D4", "sixteenth");
 
   </code></pre>
   <div class="container"></div>
+
+  <pre><code>
+
+    var note1 = i.bar(1).addNote("C5", "quarter");
+    var note2 = i.bar(1).addNote("F4", "eighth");
+    var note3 = i.bar(1).addNote("C4", "sixteenth");
+    var note4 = i.bar(1).addNote("D4", "thirty-second");
+    var note5 = i.bar(1).addNote("D5", "thirty-second");
+
+    //beam notes together
+    note2.beamTo(note5);
+
+  </code></pre>
+  <div class="container2"></div>
+
+  <pre><code>
+
+    var n = new Notation(".container", 35);
+
+    //add instruments and additional bars
+    var i =  n.addInstrument("Violin");
+    var i2 =  n.addInstrument("Violin 2");
+    var i3 =  n.addInstrument("Viola");
+  
+
+    n.addBar();
+    n.addBar();
+
+    //change key and time signatures
+    i2.bar(1).changeKeySignature("flats", 7);
+    i2.bar(1).changeTimeSignature(7, 8)
+
+
+
+  </code></pre>
+  <div class="container3"></div>
+
 </body>
 </html>

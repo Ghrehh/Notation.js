@@ -180,6 +180,33 @@ $(document).ready(function(){
 i.bar(1).addNote("G4", "half")*/
 
 var n = new Notation(".container");
+n.setTitle("Test Title")
+n.setTempo("120 BPM")
 var i =  n.addInstrument("Violin");
+var note1 = i.bar(1).addNote("C5", "quarter");
+var note2 = i.bar(1).addNote("F4", "eighth");
+var note3 = i.bar(1).addNote("C4", "sixteenth");
+var note4 = i.bar(1).addNote("D4", "sixteenth");
+
+var n = new Notation(".container2");
+var i =  n.addInstrument("Violin");
+var note1 = i.bar(1).addNote("C5", "quarter");
+var note2 = i.bar(1).addNote("F4", "eighth");
+var note3 = i.bar(1).addNote("C4", "sixteenth");
+var note4 = i.bar(1).addNote("D4", "thirty-second");
+var note5 = i.bar(1).addNote("D5", "thirty-second");
+note2.beamTo(note5);
+
+var n = new Notation(".container3");
+
+var i =  n.addInstrument("Violin");
+var i2 =  n.addInstrument("Violin 2");
+var i3 =  n.addInstrument("Viola");
+
+n.addBar();
+n.addBar();
+
+i2.bar(1).changeKeySignature("flats", 7);
+i2.bar(1).changeTimeSignature(7, 8)
 
 })
